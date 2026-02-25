@@ -10,3 +10,6 @@ thiserror.workspace = true
 chrono.workspace = true
 dirs = "6"
 json5 = "0.4"
+
+[dev-dependencies]
+tempfile = "3"
