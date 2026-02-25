@@ -4,6 +4,13 @@
 use clap::{Parser, Subcommand};
 use anyhow::Result;
 
+use gog_auth::Service;
+use gog_gmail::search::{search_messages, SearchParams};
+use gog_gmail::get::{get_message, MessageFormat};
+use gog_gmail::send::{send_message, SendParams};
+use gog_gmail::labels::list_labels;
+use gog_gmail::thread::{get_thread, list_threads};
+
 use crate::GlobalFlags;
 
 /// Gmail operations.
@@ -115,22 +122,86 @@ pub async fn execute(cmd: &GmailCmd, flags: &GlobalFlags) -> Result<()> {
     }
 }
 
-async fn execute_search(_args: &GmailSearchArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement gmail search")
+async fn execute_search(args: &GmailSearchArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Gmail, flags).await?;
+    let params = SearchParams {
+        query: args.query.clone(),
+        max_results: Some(args.max_results),
+        page_token: args.page_token.clone(),
+        label_ids: vec![],
+    };
+    let result = search_messages(&auth.client, &auth.access_token, &params).await?;
+    crate::client::output_json(flags, &result)?;
+    Ok(())
 }
 
-async fn execute_get(_args: &GmailGetArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement gmail get")
+async fn execute_get(args: &GmailGetArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Gmail, flags).await?;
+    let format = if args.raw { MessageFormat::Raw } else { MessageFormat::Full };
+    let message = get_message(&auth.client, &auth.access_token, &args.id, format).await?;
+    crate::client::output_json(flags, &message)?;
+    Ok(())
 }
 
-async fn execute_send(_args: &GmailSendArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement gmail send")
+async fn execute_send(args: &GmailSendArgs, flags: &GlobalFlags) -> Result<()> {
+    if args.to.is_empty() {
+        anyhow::bail!("at least one recipient is required (--to)");
+    }
+    let auth = crate::client::build_client(Service::Gmail, flags).await?;
+    let params = SendParams {
+        to: args.to.clone(),
+        cc: args.cc.clone(),
+        bcc: args.bcc.clone(),
+        subject: args.subject.clone().unwrap_or_default(),
+        body: args.body.clone().unwrap_or_default(),
+        html: false,
+        reply_to: args.reply_to.clone(),
+        thread_id: None,
+    };
+
+    if flags.dry_run {
+        println!("Would send email:");
+        println!("  To: {}", args.to.join(", "));
+        if !args.cc.is_empty() { println!("  CC: {}", args.cc.join(", ")); }
+        if !args.bcc.is_empty() { println!("  BCC: {}", args.bcc.join(", ")); }
+        println!("  Subject: {}", params.subject);
+        return Ok(());
+    }
+
+    let message = send_message(&auth.client, &auth.access_token, &auth.email, &params).await?;
+    crate::client::output_json(flags, &message)?;
+    Ok(())
 }
 
-async fn execute_labels(_args: &GmailLabelsArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement gmail labels")
+async fn execute_labels(args: &GmailLabelsArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Gmail, flags).await?;
+    let labels = list_labels(&auth.client, &auth.access_token).await?;
+
+    if let Some(ref filter) = args.filter {
+        let filter_lower = filter.to_lowercase();
+        let filtered: Vec<_> = labels
+            .into_iter()
+            .filter(|l| l.name.to_lowercase().contains(&filter_lower))
+            .collect();
+        crate::client::output_json(flags, &filtered)?;
+    } else {
+        crate::client::output_json(flags, &labels)?;
+    }
+    Ok(())
 }
 
-async fn execute_thread(_args: &GmailThreadArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement gmail thread")
+async fn execute_thread(args: &GmailThreadArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Gmail, flags).await?;
+
+    match &args.id {
+        Some(thread_id) => {
+            let thread = get_thread(&auth.client, &auth.access_token, thread_id).await?;
+            crate::client::output_json(flags, &thread)?;
+        }
+        None => {
+            let threads = list_threads(&auth.client, &auth.access_token, "", Some(20), None).await?;
+            crate::client::output_json(flags, &threads)?;
+        }
+    }
+    Ok(())
 }

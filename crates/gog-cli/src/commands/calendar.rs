@@ -4,6 +4,16 @@
 use clap::{Parser, Subcommand};
 use anyhow::Result;
 
+use gog_auth::Service;
+use gog_calendar::{
+    list_events, ListParams,
+    create_event, CreateParams,
+    delete_event,
+    query_freebusy,
+    list_calendars,
+    EventDateTime,
+};
+
 use crate::GlobalFlags;
 
 /// Google Calendar operations.
@@ -132,22 +142,103 @@ pub async fn execute(cmd: &CalendarCmd, flags: &GlobalFlags) -> Result<()> {
     }
 }
 
-async fn execute_list(_args: &CalendarListArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement calendar list")
+async fn execute_list(args: &CalendarListArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Calendar, flags).await?;
+    let params = ListParams {
+        calendar_id: args.calendar.clone(),
+        time_min: args.from.clone(),
+        time_max: args.to.clone(),
+        max_results: Some(args.max_results),
+        query: args.query.clone(),
+        page_token: None,
+        single_events: true,
+        order_by: Some("startTime".to_string()),
+    };
+    let result = list_events(&auth.client, &auth.access_token, &params).await?;
+    crate::client::output_json(flags, &result)?;
+    Ok(())
 }
 
-async fn execute_create(_args: &CalendarCreateArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement calendar create")
+async fn execute_create(args: &CalendarCreateArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Calendar, flags).await?;
+
+    // Convert optional string times to EventDateTime.
+    // If no time is provided, default to an all-day event starting today.
+    let now = chrono::Utc::now();
+    let start = match &args.start {
+        Some(s) => EventDateTime::date_time(s, None),
+        None => EventDateTime::date_only(&now.format("%Y-%m-%d").to_string()),
+    };
+    let end = match &args.end {
+        Some(e) => EventDateTime::date_time(e, None),
+        None => {
+            // Default end: one hour after now for timed events, next day for all-day.
+            if args.start.is_none() {
+                let tomorrow = now + chrono::Duration::days(1);
+                EventDateTime::date_only(&tomorrow.format("%Y-%m-%d").to_string())
+            } else {
+                let one_hour_later = now + chrono::Duration::hours(1);
+                EventDateTime::date_time(&one_hour_later.to_rfc3339(), None)
+            }
+        }
+    };
+
+    let params = CreateParams {
+        calendar_id: args.calendar.clone(),
+        summary: args.title.clone(),
+        description: args.description.clone(),
+        location: args.location.clone(),
+        start,
+        end,
+        attendees: args.attendees.clone(),
+        recurrence: vec![],
+    };
+
+    if flags.dry_run {
+        println!("Would create event: {}", args.title);
+        return Ok(());
+    }
+
+    let event = create_event(&auth.client, &auth.access_token, &params).await?;
+    crate::client::output_json(flags, &event)?;
+    Ok(())
 }
 
-async fn execute_delete(_args: &CalendarDeleteArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement calendar delete")
+async fn execute_delete(args: &CalendarDeleteArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Calendar, flags).await?;
+
+    if flags.dry_run {
+        println!("Would delete event: {}", args.event_id);
+        return Ok(());
+    }
+
+    delete_event(&auth.client, &auth.access_token, &args.calendar, &args.event_id).await?;
+    println!("Deleted event {}", args.event_id);
+    Ok(())
 }
 
-async fn execute_freebusy(_args: &CalendarFreeBusyArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement calendar freebusy")
+async fn execute_freebusy(args: &CalendarFreeBusyArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Calendar, flags).await?;
+
+    let time_min = args.from.clone().unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+    let time_max = args.to.clone().unwrap_or_else(|| {
+        (chrono::Utc::now() + chrono::Duration::days(7)).to_rfc3339()
+    });
+
+    let calendars: Vec<String> = if args.emails.is_empty() {
+        vec![auth.email.clone()]
+    } else {
+        args.emails.clone()
+    };
+
+    let result = query_freebusy(&auth.client, &auth.access_token, &calendars, &time_min, &time_max).await?;
+    crate::client::output_json(flags, &result)?;
+    Ok(())
 }
 
-async fn execute_calendars(_args: &CalendarCalendarsArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement calendar calendars")
+async fn execute_calendars(_args: &CalendarCalendarsArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(Service::Calendar, flags).await?;
+    let calendars = list_calendars(&auth.client, &auth.access_token).await?;
+    crate::client::output_json(flags, &calendars)?;
+    Ok(())
 }

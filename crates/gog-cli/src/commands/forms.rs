@@ -52,10 +52,36 @@ pub async fn execute(cmd: &FormsCmd, flags: &GlobalFlags) -> Result<()> {
     }
 }
 
-async fn execute_get(_args: &FormsGetArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement forms get")
+async fn execute_get(args: &FormsGetArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(gog_auth::Service::Forms, flags).await?;
+    let form = gog_forms::get::get_form(&auth.client, &auth.access_token, &args.form_id).await?;
+    crate::client::output_json(flags, &form)
 }
 
-async fn execute_responses(_args: &FormsResponsesArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement forms responses")
+async fn execute_responses(args: &FormsResponsesArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(gog_auth::Service::Forms, flags).await?;
+    if let Some(ref response_id) = args.response_id {
+        let response = gog_forms::get::get_response(
+            &auth.client,
+            &auth.access_token,
+            &args.form_id,
+            response_id,
+        )
+        .await?;
+        crate::client::output_json(flags, &response)
+    } else {
+        let params = gog_forms::responses::ListResponsesParams {
+            page_size: Some(args.max_results),
+            page_token: None,
+            filter: None,
+        };
+        let list = gog_forms::responses::list_responses(
+            &auth.client,
+            &auth.access_token,
+            &args.form_id,
+            &params,
+        )
+        .await?;
+        crate::client::output_json(flags, &list)
+    }
 }

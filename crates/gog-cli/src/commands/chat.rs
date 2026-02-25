@@ -73,14 +73,34 @@ pub async fn execute(cmd: &ChatCmd, flags: &GlobalFlags) -> Result<()> {
     }
 }
 
-async fn execute_spaces(_args: &ChatSpacesArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement chat spaces")
+async fn execute_spaces(args: &ChatSpacesArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(gog_auth::Service::Chat, flags).await?;
+    let list = gog_chat::spaces::list_spaces(&auth.client, None, Some(args.max_results)).await?;
+    crate::client::output_json(flags, &list)
 }
 
-async fn execute_messages(_args: &ChatMessagesArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement chat messages")
+async fn execute_messages(args: &ChatMessagesArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(gog_auth::Service::Chat, flags).await?;
+    if let Some(ref text) = args.message {
+        let msg = gog_chat::messages::send_message(&auth.client, &args.space, text).await?;
+        crate::client::output_json(flags, &msg)
+    } else {
+        let list = gog_chat::messages::list_messages(
+            &auth.client,
+            &args.space,
+            None,
+            Some(args.max_results),
+            None,
+        )
+        .await?;
+        crate::client::output_json(flags, &list)
+    }
 }
 
-async fn execute_members(_args: &ChatMembersArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement chat members")
+async fn execute_members(args: &ChatMembersArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(gog_auth::Service::Chat, flags).await?;
+    let list =
+        gog_chat::members::list_members(&auth.client, &args.space, None, Some(args.max_results))
+            .await?;
+    crate::client::output_json(flags, &list)
 }

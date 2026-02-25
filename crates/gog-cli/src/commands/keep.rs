@@ -49,10 +49,19 @@ pub async fn execute(cmd: &KeepCmd, flags: &GlobalFlags) -> Result<()> {
     }
 }
 
-async fn execute_list(_args: &KeepListArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement keep list")
+async fn execute_list(args: &KeepListArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(gog_auth::Service::Keep, flags).await?;
+    let params = gog_keep::list::ListParams {
+        page_size: Some(args.max_results),
+        page_token: None,
+        filter: args.label.as_ref().map(|l| format!("label = {l}")),
+    };
+    let list = gog_keep::list::list_notes(&auth.client, &auth.access_token, &params).await?;
+    crate::client::output_json(flags, &list)
 }
 
-async fn execute_get(_args: &KeepGetArgs, _flags: &GlobalFlags) -> Result<()> {
-    todo!("implement keep get")
+async fn execute_get(args: &KeepGetArgs, flags: &GlobalFlags) -> Result<()> {
+    let auth = crate::client::build_client(gog_auth::Service::Keep, flags).await?;
+    let note = gog_keep::get::get_note(&auth.client, &auth.access_token, &args.id).await?;
+    crate::client::output_json(flags, &note)
 }

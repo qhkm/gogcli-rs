@@ -3,6 +3,7 @@
 // Binary entry point with clap v4 derive-macro CLI definition.
 
 mod commands;
+mod client;
 mod error;
 mod output;
 
