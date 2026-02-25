@@ -6,3 +6,21 @@ edition.workspace = true
 [[bin]]
 name = "gog"
 path = "src/main.rs"
+
+[dependencies]
+gog-core = { path = "../gog-core" }
+gog-auth = { path = "../gog-auth" }
+gog-secrets = { path = "../gog-secrets" }
+gog-api = { path = "../gog-api" }
+gog-gmail = { path = "../gog-gmail" }
+gog-calendar = { path = "../gog-calendar" }
+gog-drive = { path = "../gog-drive" }
+gog-contacts = { path = "../gog-contacts" }
+gog-chat = { path = "../gog-chat" }
+gog-keep = { path = "../gog-keep" }
+gog-forms = { path = "../gog-forms" }
+clap = { version = "4", features = ["derive", "env"] }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
