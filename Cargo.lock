@@ -226,6 +226,7 @@ version = "0.1.0"
 name = "gog-core"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "dirs",
  "json5",
