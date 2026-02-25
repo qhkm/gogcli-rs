@@ -1,0 +1,4 @@
+[package]
+name = "gog-drive"
+version.workspace = true
+edition.workspace = true

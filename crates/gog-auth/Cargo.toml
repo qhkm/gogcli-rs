@@ -1,0 +1,4 @@
+[package]
+name = "gog-auth"
+version.workspace = true
+edition.workspace = true

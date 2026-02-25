@@ -1,0 +1,8 @@
+[package]
+name = "gog-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "gog"
+path = "src/main.rs"

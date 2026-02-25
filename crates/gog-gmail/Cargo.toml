@@ -1,0 +1,4 @@
+[package]
+name = "gog-gmail"
+version.workspace = true
+edition.workspace = true

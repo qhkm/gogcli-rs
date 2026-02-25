@@ -1,0 +1,12 @@
+[package]
+name = "gog-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
+dirs = "6"
+json5 = "0.4"

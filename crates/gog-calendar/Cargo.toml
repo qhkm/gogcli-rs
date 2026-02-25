@@ -1,0 +1,4 @@
+[package]
+name = "gog-calendar"
+version.workspace = true
+edition.workspace = true

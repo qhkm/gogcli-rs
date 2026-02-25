@@ -1,0 +1,4 @@
+[package]
+name = "gog-contacts"
+version.workspace = true
+edition.workspace = true
