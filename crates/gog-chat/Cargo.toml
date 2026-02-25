@@ -2,3 +2,13 @@
 name = "gog-chat"
 version.workspace = true
 edition.workspace = true
+
+[dependencies]
+gog-core = { path = "../gog-core" }
+gog-api = { path = "../gog-api" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+chrono.workspace = true
+reqwest = { version = "0.12", features = ["json"] }
