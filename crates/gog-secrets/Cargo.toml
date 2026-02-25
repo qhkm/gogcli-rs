@@ -2,3 +2,14 @@
 name = "gog-secrets"
 version.workspace = true
 edition.workspace = true
+
+[dependencies]
+gog-core = { path = "../gog-core" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
+keyring = "3"
+
+[dev-dependencies]
+tempfile = "3"
