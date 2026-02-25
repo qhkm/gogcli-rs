@@ -40,7 +40,7 @@ pub enum Service {
 
 impl Service {
     /// Parse a service from a string (case-insensitive).
-    pub fn from_str(s: &str) -> Result<Service, AuthError> {
+    pub fn parse(s: &str) -> Result<Service, AuthError> {
         match s.trim().to_lowercase().as_str() {
             "gmail" => Ok(Service::Gmail),
             "calendar" => Ok(Service::Calendar),
@@ -283,19 +283,19 @@ mod tests {
 
     #[test]
     fn test_service_from_str() {
-        assert_eq!(Service::from_str("gmail").unwrap(), Service::Gmail);
-        assert_eq!(Service::from_str("CALENDAR").unwrap(), Service::Calendar);
-        assert_eq!(Service::from_str("Drive").unwrap(), Service::Drive);
-        assert_eq!(Service::from_str("contacts").unwrap(), Service::Contacts);
-        assert_eq!(Service::from_str("chat").unwrap(), Service::Chat);
-        assert_eq!(Service::from_str("keep").unwrap(), Service::Keep);
-        assert_eq!(Service::from_str("forms").unwrap(), Service::Forms);
+        assert_eq!(Service::parse("gmail").unwrap(), Service::Gmail);
+        assert_eq!(Service::parse("CALENDAR").unwrap(), Service::Calendar);
+        assert_eq!(Service::parse("Drive").unwrap(), Service::Drive);
+        assert_eq!(Service::parse("contacts").unwrap(), Service::Contacts);
+        assert_eq!(Service::parse("chat").unwrap(), Service::Chat);
+        assert_eq!(Service::parse("keep").unwrap(), Service::Keep);
+        assert_eq!(Service::parse("forms").unwrap(), Service::Forms);
     }
 
     #[test]
     fn test_service_from_str_invalid() {
         assert!(matches!(
-            Service::from_str("unknown"),
+            Service::parse("unknown"),
             Err(AuthError::UnknownService(_))
         ));
     }

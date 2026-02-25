@@ -78,7 +78,7 @@ fn parse_relative_past(lower: &str) -> Option<DateTime<Utc>> {
     let rest = lower.strip_suffix(" ago")?;
     let (n, unit) = split_n_unit(rest)?;
     let now = Utc::now();
-    let dt = apply_offset(now, -(n as i64), unit)?;
+    let dt = apply_offset(now, -n, unit)?;
     Some(dt)
 }
 
@@ -88,7 +88,7 @@ fn parse_relative_future(lower: &str) -> Option<DateTime<Utc>> {
     let rest = lower.strip_prefix("in ")?;
     let (n, unit) = split_n_unit(rest)?;
     let now = Utc::now();
-    let dt = apply_offset(now, n as i64, unit)?;
+    let dt = apply_offset(now, n, unit)?;
     Some(dt)
 }
 

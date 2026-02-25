@@ -12,6 +12,7 @@ use crate::types::{DriveError, DriveFile};
 // ---------------------------------------------------------------------------
 
 /// Options for searching Drive files.
+#[derive(Default)]
 pub struct SearchOptions {
     /// Full-text search query, e.g. `"name contains 'report'"`.
     pub query: String,
@@ -25,17 +26,6 @@ pub struct SearchOptions {
     pub order_by: Option<String>,
 }
 
-impl Default for SearchOptions {
-    fn default() -> Self {
-        Self {
-            query: String::new(),
-            parent_id: None,
-            include_trashed: false,
-            page_size: None,
-            order_by: None,
-        }
-    }
-}
 
 // ---------------------------------------------------------------------------
 // search_files

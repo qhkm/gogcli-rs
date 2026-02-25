@@ -17,6 +17,7 @@ const DEFAULT_FIELDS: &str =
 // ---------------------------------------------------------------------------
 
 /// Options for listing Drive files.
+#[derive(Default)]
 pub struct ListOptions {
     /// Parent folder ID. None means "My Drive root" (no q filter on parents).
     pub parent_id: Option<String>,
@@ -32,18 +33,6 @@ pub struct ListOptions {
     pub order_by: Option<String>,
 }
 
-impl Default for ListOptions {
-    fn default() -> Self {
-        Self {
-            parent_id: None,
-            query: None,
-            page_size: None,
-            page_token: None,
-            include_trashed: false,
-            order_by: None,
-        }
-    }
-}
 
 // ---------------------------------------------------------------------------
 // list_files

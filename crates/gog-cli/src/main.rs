@@ -11,7 +11,7 @@ use std::process;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-use commands::{auth, calendar, chat, config, contacts, drive, forms, gmail, keep};
+use commands::{auth, calendar, chat, completion, config, contacts, drive, forms, gmail, keep};
 
 // ---------------------------------------------------------------------------
 // Version
@@ -136,6 +136,9 @@ pub enum Command {
     /// Show/edit config.
     Config(config::ConfigCmd),
 
+    /// Generate shell completions.
+    Completion(completion::CompletionCmd),
+
     // -----------------------------------------------------------------------
     // Desire-path aliases (top-level shortcuts)
     // -----------------------------------------------------------------------
@@ -202,6 +205,11 @@ async fn run(cli: Cli) -> Result<()> {
 
         Command::Version(_) => {
             print_version();
+            Ok(())
+        }
+
+        Command::Completion(cmd) => {
+            cmd.execute();
             Ok(())
         }
 
