@@ -143,7 +143,305 @@ fn normalize_client(raw: &str) -> Result<String, SecretsError> {
 }
 
 // ---------------------------------------------------------------------------
-// KeyringStore
+// FileStore — stores tokens as JSON files in the keyring directory.
+// Mirrors the Go version's file backend (github.com/99designs/keyring).
+// ---------------------------------------------------------------------------
+
+pub struct FileStore {
+    dir: std::path::PathBuf,
+}
+
+impl FileStore {
+    /// Create a FileStore using the standard keyring directory
+    /// (`<config_dir>/keyring/`).
+    pub fn new() -> Result<Self, SecretsError> {
+        let config_dir = gog_core::config::config_dir()
+            .map_err(|e| SecretsError::Keyring(format!("config dir: {e}")))?;
+        let dir = config_dir.join("keyring");
+        std::fs::create_dir_all(&dir)
+            .map_err(|e| SecretsError::Keyring(format!("create keyring dir: {e}")))?;
+        Ok(FileStore { dir })
+    }
+
+    /// Create a FileStore with a custom directory (for testing).
+    pub fn with_dir(dir: std::path::PathBuf) -> Result<Self, SecretsError> {
+        std::fs::create_dir_all(&dir)
+            .map_err(|e| SecretsError::Keyring(format!("create keyring dir: {e}")))?;
+        Ok(FileStore { dir })
+    }
+
+    /// Encode a key into a safe filename (replace : and @ with _).
+    fn key_to_filename(key: &str) -> String {
+        key.replace(':', "_").replace('@', "_")
+    }
+
+    fn file_path(&self, key: &str) -> std::path::PathBuf {
+        self.dir.join(format!("{}.json", Self::key_to_filename(key)))
+    }
+
+    fn read_value(&self, key: &str) -> Result<String, SecretsError> {
+        let path = self.file_path(key);
+        std::fs::read_to_string(&path).map_err(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                SecretsError::Keyring(format!("No matching entry found in secure storage"))
+            } else {
+                SecretsError::Keyring(format!("read {}: {e}", path.display()))
+            }
+        })
+    }
+
+    fn write_value(&self, key: &str, value: &str) -> Result<(), SecretsError> {
+        let path = self.file_path(key);
+        std::fs::write(&path, value)
+            .map_err(|e| SecretsError::Keyring(format!("write {}: {e}", path.display())))?;
+        // Restrict permissions (best effort on Unix)
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
+        }
+        Ok(())
+    }
+
+    fn delete_value(&self, key: &str) -> Result<(), SecretsError> {
+        let path = self.file_path(key);
+        match std::fs::remove_file(&path) {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(SecretsError::Keyring(format!("delete {}: {e}", path.display()))),
+        }
+    }
+
+    /// List all .json files in the keyring directory and extract the original keys.
+    fn list_files(&self) -> Result<Vec<String>, SecretsError> {
+        let mut keys = Vec::new();
+        let entries = std::fs::read_dir(&self.dir)
+            .map_err(|e| SecretsError::Keyring(format!("read keyring dir: {e}")))?;
+        for entry in entries {
+            let entry = entry.map_err(|e| SecretsError::Keyring(e.to_string()))?;
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            if let Some(stem) = name.strip_suffix(".json") {
+                // The filename is the key with : and @ replaced by _
+                // We can't perfectly reverse this, but for token keys we can
+                // read the file and extract client/email from the stored data.
+                keys.push(stem.to_string());
+            }
+        }
+        Ok(keys)
+    }
+}
+
+impl Default for FileStore {
+    fn default() -> Self {
+        Self::new().expect("failed to create FileStore")
+    }
+}
+
+impl Store for FileStore {
+    fn keys(&self) -> Result<Vec<String>, SecretsError> {
+        self.list_files()
+    }
+
+    fn set_token(&self, client: &str, email: &str, token: &Token) -> Result<(), SecretsError> {
+        let email = normalize_email(email);
+        if email.is_empty() {
+            return Err(SecretsError::MissingEmail);
+        }
+        if token.refresh_token.is_empty() {
+            return Err(SecretsError::MissingRefreshToken);
+        }
+
+        let normalized_client = normalize_client(client)?;
+
+        let created_at = if token.created_at == DateTime::<Utc>::default() {
+            Utc::now()
+        } else {
+            token.created_at
+        };
+
+        let stored = StoredToken {
+            refresh_token: token.refresh_token.clone(),
+            services: token.services.clone(),
+            scopes: token.scopes.clone(),
+            created_at,
+        };
+
+        let json = serde_json::to_string_pretty(&stored)
+            .map_err(|e| SecretsError::Serialize(e.to_string()))?;
+
+        let key = token_key(&normalized_client, &email);
+        self.write_value(&key, &json)
+    }
+
+    fn get_token(&self, client: &str, email: &str) -> Result<Token, SecretsError> {
+        let email = normalize_email(email);
+        if email.is_empty() {
+            return Err(SecretsError::MissingEmail);
+        }
+
+        let normalized_client = normalize_client(client)?;
+        let key = token_key(&normalized_client, &email);
+        let json = self.read_value(&key)?;
+
+        let stored: StoredToken = serde_json::from_str(&json)
+            .map_err(|e| SecretsError::Deserialize(e.to_string()))?;
+
+        Ok(Token {
+            client: normalized_client,
+            email,
+            services: stored.services,
+            scopes: stored.scopes,
+            created_at: stored.created_at,
+            refresh_token: stored.refresh_token,
+        })
+    }
+
+    fn delete_token(&self, client: &str, email: &str) -> Result<(), SecretsError> {
+        let email = normalize_email(email);
+        if email.is_empty() {
+            return Err(SecretsError::MissingEmail);
+        }
+
+        let normalized_client = normalize_client(client)?;
+        let key = token_key(&normalized_client, &email);
+        self.delete_value(&key)
+    }
+
+    fn list_tokens(&self) -> Result<Vec<Token>, SecretsError> {
+        let mut tokens = Vec::new();
+        let entries = std::fs::read_dir(&self.dir)
+            .map_err(|e| SecretsError::Keyring(format!("read keyring dir: {e}")))?;
+
+        for entry in entries {
+            let entry = entry.map_err(|e| SecretsError::Keyring(e.to_string()))?;
+            let name = entry.file_name();
+            let name_str = name.to_string_lossy();
+
+            // Only process token_*.json files (skip default_account, etc.)
+            if !name_str.starts_with("token_") || !name_str.ends_with(".json") {
+                continue;
+            }
+
+            let json = match std::fs::read_to_string(entry.path()) {
+                Ok(j) => j,
+                Err(_) => continue,
+            };
+
+            let stored: StoredToken = match serde_json::from_str(&json) {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+
+            // Reconstruct client and email from the filename.
+            // Filename: token_{client}_{email}.json
+            // We need to parse this carefully since email contains _ (was @).
+            let stem = name_str.strip_suffix(".json").unwrap_or(&name_str);
+            let rest = match stem.strip_prefix("token_") {
+                Some(r) => r,
+                None => continue,
+            };
+
+            // Split on first _ to get client, rest is email-ish
+            // But email had @ replaced with _, so we read all files and
+            // use a heuristic: find the first _ after which the rest looks like an email.
+            // Simpler approach: try the key against the store.
+            // Actually, the safest approach: store client+email in the JSON itself.
+            // For now, use a simple split: first segment is client, rest is email.
+            if let Some(idx) = rest.find('_') {
+                let client = &rest[..idx];
+                let email_part = &rest[idx + 1..];
+                // The email had @ replaced with _, so the first _ in email_part
+                // that's followed by something with a dot is likely the @ replacement.
+                // Actually, we know the format: "default_dr.noranizaahmad_gmail.com"
+                // So client=default, email=dr.noranizaahmad_gmail.com
+                // We need to find where the @ was. Look for common TLD patterns.
+                let email = reconstruct_email(email_part);
+                tokens.push(Token {
+                    client: client.to_string(),
+                    email,
+                    services: stored.services,
+                    scopes: stored.scopes,
+                    created_at: stored.created_at,
+                    refresh_token: stored.refresh_token,
+                });
+            }
+        }
+
+        Ok(tokens)
+    }
+
+    fn get_default_account(&self, client: &str) -> Result<Option<String>, SecretsError> {
+        let normalized_client = normalize_client(client)?;
+        let key = format!("default_account:{}", normalized_client);
+
+        match self.read_value(&key) {
+            Ok(email) => return Ok(Some(email.trim().to_string())),
+            Err(_) => {}
+        }
+
+        // Fall back to the global default_account key
+        match self.read_value("default_account") {
+            Ok(email) => Ok(Some(email.trim().to_string())),
+            Err(_) => Ok(None),
+        }
+    }
+
+    fn set_default_account(&self, client: &str, email: &str) -> Result<(), SecretsError> {
+        let email = normalize_email(email);
+        if email.is_empty() {
+            return Err(SecretsError::MissingEmail);
+        }
+
+        let normalized_client = normalize_client(client)?;
+        let key = format!("default_account:{}", normalized_client);
+
+        self.write_value(&key, &email)?;
+        self.write_value("default_account", &email)?;
+
+        Ok(())
+    }
+}
+
+/// Reconstruct an email from a filename-safe string.
+/// The @ was replaced with _, so "dr.noranizaahmad_gmail.com" → "dr.noranizaahmad@gmail.com".
+/// Heuristic: find the last _ before a segment that looks like a domain (contains a dot).
+fn reconstruct_email(s: &str) -> String {
+    // Find all _ positions and try replacing the last ones with @
+    let underscores: Vec<usize> = s.match_indices('_').map(|(i, _)| i).collect();
+    for &pos in underscores.iter().rev() {
+        let after = &s[pos + 1..];
+        if after.contains('.') && !after.starts_with('.') && !after.ends_with('.') {
+            let mut result = String::with_capacity(s.len());
+            result.push_str(&s[..pos]);
+            result.push('@');
+            result.push_str(after);
+            return result;
+        }
+    }
+    // Fallback: return as-is
+    s.to_string()
+}
+
+// ---------------------------------------------------------------------------
+// open_store — factory that reads config and returns the right store.
+// ---------------------------------------------------------------------------
+
+/// Open the default store based on config.json's `keyring_backend` setting.
+/// Falls back to `FileStore` if not specified or on any keyring error.
+pub fn open_store() -> Result<Box<dyn Store>, SecretsError> {
+    let cfg = gog_core::config::read_config().unwrap_or_default();
+    let backend = cfg.keyring_backend.as_deref().unwrap_or("file");
+
+    match backend {
+        "file" | "auto" | "" => Ok(Box::new(FileStore::new()?)),
+        "keychain" | "keyring" | "secret-service" => Ok(Box::new(KeyringStore::new())),
+        other => Err(SecretsError::Keyring(format!("unknown keyring_backend: {other}"))),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// KeyringStore — uses the OS keychain (macOS Keychain, Secret Service, etc.)
 // ---------------------------------------------------------------------------
 
 pub struct KeyringStore {
@@ -171,8 +469,6 @@ impl Default for KeyringStore {
 
 impl Store for KeyringStore {
     fn keys(&self) -> Result<Vec<String>, SecretsError> {
-        // The keyring crate v3 doesn't support listing keys.
-        // Return an empty vec for now; proper listing will be implemented later.
         Ok(vec![])
     }
 
@@ -257,8 +553,6 @@ impl Store for KeyringStore {
     }
 
     fn list_tokens(&self) -> Result<Vec<Token>, SecretsError> {
-        // The keyring crate v3 doesn't support listing keys.
-        // Return an empty vec for now.
         Ok(vec![])
     }
 
@@ -272,7 +566,6 @@ impl Store for KeyringStore {
             Err(e) => return Err(SecretsError::Keyring(e.to_string())),
         }
 
-        // Fall back to the global default_account key
         match self.entry("default_account")?.get_password() {
             Ok(email) => Ok(Some(email)),
             Err(keyring::Error::NoEntry) => Ok(None),

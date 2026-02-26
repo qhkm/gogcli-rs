@@ -7,8 +7,6 @@ use serde::Serialize;
 use gog_api::AuthenticatedClient;
 use gog_auth::Service;
 use gog_core::output::OutputConfig;
-use gog_secrets::{KeyringStore, Store};
-
 use crate::GlobalFlags;
 
 /// Resolve the account email from flags or the default account in the keyring.
@@ -16,7 +14,7 @@ pub fn require_account(flags: &GlobalFlags) -> Result<String> {
     if let Some(ref email) = flags.account {
         return Ok(email.clone());
     }
-    let store = KeyringStore::new();
+    let store = gog_secrets::open_store()?;
     if let Ok(Some(email)) = store.get_default_account(&flags.client) {
         return Ok(email);
     }

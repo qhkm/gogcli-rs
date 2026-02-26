@@ -4,8 +4,6 @@
 
 use gog_auth::Service;
 use gog_core::config;
-use gog_secrets::{KeyringStore, Store};
-
 use crate::error::ApiError;
 
 const TOKEN_ENDPOINT: &str = "https://oauth2.googleapis.com/token";
@@ -33,8 +31,8 @@ impl AuthenticatedClient {
         // 1. Read client credentials from config
         let creds = config::read_client_credentials_for(oauth_client)?;
 
-        // 2. Get refresh token from keyring
-        let store = KeyringStore::new();
+        // 2. Get refresh token from store
+        let store = gog_secrets::open_store()?;
         let token = store.get_token(oauth_client, email)?;
         let refresh_token = token.refresh_token;
 

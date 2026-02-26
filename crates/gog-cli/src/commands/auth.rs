@@ -5,9 +5,8 @@ use clap::{Parser, Subcommand};
 use anyhow::{bail, Result};
 
 use gog_auth::scopes::{Service, scopes_for_services};
-use gog_auth::oauth::OAuthConfig;
 use gog_core::config;
-use gog_secrets::{KeyringStore, Store, Token};
+use gog_secrets::Token;
 
 use crate::GlobalFlags;
 
@@ -90,35 +89,19 @@ async fn execute_add(args: &AuthAddArgs, flags: &GlobalFlags) -> Result<()> {
     // Build scopes
     let scopes = scopes_for_services(&services);
 
-    // Build OAuth config
-    let oauth = OAuthConfig {
-        client_id: creds.client_id,
-        client_secret: creds.client_secret,
-        scopes: scopes.clone(),
-        redirect_uri: "http://127.0.0.1:8080/callback".to_string(),
-    };
-
-    // Print auth URL for user to visit
-    let auth_url = oauth.auth_url();
-    println!("Open this URL in your browser to authorize:\n");
-    println!("  {auth_url}\n");
-    println!("Paste the authorization code here:");
-
-    // Read authorization code from stdin
-    let mut code = String::new();
-    std::io::stdin().read_line(&mut code)?;
-    let code = code.trim();
-
-    if code.is_empty() {
-        bail!("no authorization code provided");
-    }
-
-    // Exchange code for tokens
-    let token_resp = oauth.exchange_code(code).await?;
+    // Run the browser OAuth flow (starts local server, opens browser, waits for callback)
+    let timeout = std::time::Duration::from_secs(120);
+    let (_oauth, token_resp) = gog_auth::oauth::authorize_with_browser(
+        creds.client_id,
+        creds.client_secret,
+        scopes.clone(),
+        timeout,
+    )
+    .await?;
 
     let refresh_token = token_resp
         .refresh_token
-        .ok_or_else(|| anyhow::anyhow!("no refresh token in response (account may already be authorized; use --force to re-consent)"))?;
+        .ok_or_else(|| anyhow::anyhow!("no refresh token in response (account may already be authorized; revoke and re-authorize)"))?;
 
     // Determine email
     let email = match &args.email {
@@ -136,7 +119,7 @@ async fn execute_add(args: &AuthAddArgs, flags: &GlobalFlags) -> Result<()> {
     };
 
     // Store token
-    let store = KeyringStore::new();
+    let store = gog_secrets::open_store()?;
     let service_names: Vec<String> = services.iter().map(|s| s.as_str().to_string()).collect();
     let token = Token {
         client: flags.client.clone(),
@@ -159,7 +142,7 @@ async fn execute_remove(args: &AuthRemoveArgs, flags: &GlobalFlags) -> Result<()
         None => crate::client::require_account(flags)?,
     };
 
-    let store = KeyringStore::new();
+    let store = gog_secrets::open_store()?;
     store.delete_token(&flags.client, &email)?;
 
     println!("Removed credentials for {} (client: {})", email, flags.client);
@@ -172,7 +155,7 @@ async fn execute_status(args: &AuthStatusArgs, flags: &GlobalFlags) -> Result<()
         None => crate::client::require_account(flags)?,
     };
 
-    let store = KeyringStore::new();
+    let store = gog_secrets::open_store()?;
     match store.get_token(&flags.client, &email) {
         Ok(token) => {
             if flags.json {
@@ -197,7 +180,7 @@ async fn execute_status(args: &AuthStatusArgs, flags: &GlobalFlags) -> Result<()
 }
 
 async fn execute_list(_args: &AuthListArgs, flags: &GlobalFlags) -> Result<()> {
-    let store = KeyringStore::new();
+    let store = gog_secrets::open_store()?;
     let tokens = store.list_tokens()?;
 
     if flags.json {

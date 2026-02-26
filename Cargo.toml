@@ -28,3 +28,4 @@ thiserror = "2"
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
 tracing = "0.1"
+rand = "0.8"
