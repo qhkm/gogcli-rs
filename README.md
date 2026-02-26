@@ -17,7 +17,10 @@ All commands support `--json`, `--plain` (TSV), `--results-only`, and `--select`
 ## Installation
 
 ```bash
-# Build from source
+# From crates.io
+cargo install gog-cli
+
+# Or build from source
 cargo build --release
 cp target/release/gog ~/.local/bin/
 ```
