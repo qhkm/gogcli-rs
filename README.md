@@ -1,6 +1,6 @@
 # gogcli-rs
 
-A fast, ergonomic Google Workspace CLI written in Rust. Port of [gogcli](https://github.com/qhkm/gogcli) (Go).
+A fast, ergonomic Google Workspace CLI written in Rust. Port of Peter Steinberg's [gogcli](https://github.com/steipete/gogcli) (Go).
 
 ## Features
 
@@ -172,4 +172,4 @@ Tokens are stored based on the `keyring_backend` config:
 
 ## License
 
-Apache-2.0
+MIT
