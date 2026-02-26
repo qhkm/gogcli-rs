@@ -1,7 +1,12 @@
 [package]
 name = "gog-core"
+description = "Core types, config, and output formatting for gogcli"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
 
 [dependencies]
 serde.workspace = true

@@ -19,6 +19,9 @@ members = [
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
+repository = "https://github.com/qhkm/gogcli-rs"
+homepage = "https://github.com/qhkm/gogcli-rs"
+authors = ["qhkm"]
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }

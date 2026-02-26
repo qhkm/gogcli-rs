@@ -1,11 +1,16 @@
 [package]
 name = "gog-contacts"
+description = "Google Contacts (People API) client for gogcli"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
 
 [dependencies]
-gog-core = { path = "../gog-core" }
-gog-api = { path = "../gog-api" }
+gog-core = { path = "../gog-core", version = "0.1.0" }
+gog-api = { path = "../gog-api", version = "0.1.0" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

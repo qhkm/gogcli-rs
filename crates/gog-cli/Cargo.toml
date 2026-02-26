@@ -1,24 +1,29 @@
 [package]
 name = "gog-cli"
+description = "Fast Google Workspace CLI — Gmail, Calendar, Drive, Contacts, Chat, Keep, Forms"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
 
 [[bin]]
 name = "gog"
 path = "src/main.rs"
 
 [dependencies]
-gog-core = { path = "../gog-core" }
-gog-auth = { path = "../gog-auth" }
-gog-secrets = { path = "../gog-secrets" }
-gog-api = { path = "../gog-api" }
-gog-gmail = { path = "../gog-gmail" }
-gog-calendar = { path = "../gog-calendar" }
-gog-drive = { path = "../gog-drive" }
-gog-contacts = { path = "../gog-contacts" }
-gog-chat = { path = "../gog-chat" }
-gog-keep = { path = "../gog-keep" }
-gog-forms = { path = "../gog-forms" }
+gog-core = { path = "../gog-core", version = "0.1.0" }
+gog-auth = { path = "../gog-auth", version = "0.1.0" }
+gog-secrets = { path = "../gog-secrets", version = "0.1.0" }
+gog-api = { path = "../gog-api", version = "0.1.0" }
+gog-gmail = { path = "../gog-gmail", version = "0.1.0" }
+gog-calendar = { path = "../gog-calendar", version = "0.1.0" }
+gog-drive = { path = "../gog-drive", version = "0.1.0" }
+gog-contacts = { path = "../gog-contacts", version = "0.1.0" }
+gog-chat = { path = "../gog-chat", version = "0.1.0" }
+gog-keep = { path = "../gog-keep", version = "0.1.0" }
+gog-forms = { path = "../gog-forms", version = "0.1.0" }
 clap = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 tokio.workspace = true
