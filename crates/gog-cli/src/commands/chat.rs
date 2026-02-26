@@ -76,7 +76,17 @@ pub async fn execute(cmd: &ChatCmd, flags: &GlobalFlags) -> Result<()> {
 async fn execute_spaces(args: &ChatSpacesArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(gog_auth::Service::Chat, flags).await?;
     let list = gog_chat::spaces::list_spaces(&auth.client, None, Some(args.max_results)).await?;
-    crate::client::output_json(flags, &list)
+    crate::client::output(flags, &list, || {
+        let mut rows = vec![vec!["RESOURCE".into(), "NAME".into(), "TYPE".into()]];
+        for s in &list.spaces {
+            rows.push(vec![
+                s.name.clone(),
+                s.display_name.clone(),
+                s.space_type.clone(),
+            ]);
+        }
+        rows
+    })
 }
 
 async fn execute_messages(args: &ChatMessagesArgs, flags: &GlobalFlags) -> Result<()> {
@@ -93,7 +103,15 @@ async fn execute_messages(args: &ChatMessagesArgs, flags: &GlobalFlags) -> Resul
             None,
         )
         .await?;
-        crate::client::output_json(flags, &list)
+        crate::client::output(flags, &list, || {
+            let mut rows = vec![vec!["RESOURCE".into(), "SENDER".into(), "TIME".into(), "TEXT".into()]];
+            for m in &list.messages {
+                let sender = m.sender.as_ref().map_or("-".into(), |s| s.display_name.clone());
+                let text_preview: String = m.text.chars().take(60).collect();
+                rows.push(vec![m.name.clone(), sender, m.create_time.clone(), text_preview]);
+            }
+            rows
+        })
     }
 }
 
@@ -102,5 +120,13 @@ async fn execute_members(args: &ChatMembersArgs, flags: &GlobalFlags) -> Result<
     let list =
         gog_chat::members::list_members(&auth.client, &args.space, None, Some(args.max_results))
             .await?;
-    crate::client::output_json(flags, &list)
+    crate::client::output(flags, &list, || {
+        let mut rows = vec![vec!["RESOURCE".into(), "NAME".into(), "ROLE".into()]];
+        for m in &list.memberships {
+            let name = m.member.as_ref().map_or("-".into(), |u| u.display_name.clone());
+            let role = m.role.clone();
+            rows.push(vec![m.name.clone(), name, role]);
+        }
+        rows
+    })
 }

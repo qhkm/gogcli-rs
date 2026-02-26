@@ -57,7 +57,17 @@ async fn execute_list(args: &KeepListArgs, flags: &GlobalFlags) -> Result<()> {
         filter: args.label.as_ref().map(|l| format!("label = {l}")),
     };
     let list = gog_keep::list::list_notes(&auth.client, &auth.access_token, &params).await?;
-    crate::client::output_json(flags, &list)
+    crate::client::output(flags, &list, || {
+        let mut rows = vec![vec!["RESOURCE".into(), "TITLE".into(), "UPDATED".into()]];
+        for n in &list.notes {
+            rows.push(vec![
+                n.name.clone(),
+                n.title.clone(),
+                n.update_time.clone().unwrap_or_default(),
+            ]);
+        }
+        rows
+    })
 }
 
 async fn execute_get(args: &KeepGetArgs, flags: &GlobalFlags) -> Result<()> {

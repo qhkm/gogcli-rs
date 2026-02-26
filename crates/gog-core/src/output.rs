@@ -287,6 +287,54 @@ fn get_at_path(v: &Value, path: &str) -> Option<Value> {
 }
 
 // ---------------------------------------------------------------------------
+// write_table  (text mode output)
+// ---------------------------------------------------------------------------
+
+/// A simple tabwriter that pads columns with spaces.
+///
+/// Mirrors Go's `text/tabwriter` with minwidth=0, tabwidth=4, padding=2.
+pub fn write_table<W: Write>(w: &mut W, rows: &[Vec<String>]) -> Result<(), OutputError> {
+    if rows.is_empty() {
+        return Ok(());
+    }
+
+    // Compute max width per column.
+    let num_cols = rows.iter().map(|r| r.len()).max().unwrap_or(0);
+    let mut widths = vec![0usize; num_cols];
+    for row in rows {
+        for (i, cell) in row.iter().enumerate() {
+            if i < num_cols {
+                widths[i] = widths[i].max(cell.len());
+            }
+        }
+    }
+
+    for row in rows {
+        let last_col = row.len().saturating_sub(1);
+        for (i, cell) in row.iter().enumerate() {
+            if i == last_col {
+                // Last column: no trailing padding.
+                write!(w, "{}", cell)?;
+            } else {
+                // Pad to column width + 2 spaces gap.
+                write!(w, "{:<width$}  ", cell, width = widths[i])?;
+            }
+        }
+        writeln!(w)?;
+    }
+    Ok(())
+}
+
+/// Write tab-separated values (TSV) — used for `--plain` mode.
+pub fn write_tsv<W: Write>(w: &mut W, rows: &[Vec<String>]) -> Result<(), OutputError> {
+    for row in rows {
+        let line = row.join("\t");
+        writeln!(w, "{}", line)?;
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 

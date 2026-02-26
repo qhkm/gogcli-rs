@@ -131,7 +131,18 @@ async fn execute_search(args: &GmailSearchArgs, flags: &GlobalFlags) -> Result<(
         label_ids: vec![],
     };
     let result = search_messages(&auth.client, &auth.access_token, &params).await?;
-    crate::client::output_json(flags, &result)?;
+    crate::client::output(flags, &result, || {
+        let mut rows = vec![vec![
+            "ID".into(), "THREAD".into(),
+        ]];
+        for msg in &result.messages {
+            rows.push(vec![
+                msg.id.clone(),
+                msg.thread_id.clone(),
+            ]);
+        }
+        rows
+    })?;
     Ok(())
 }
 
@@ -177,16 +188,27 @@ async fn execute_labels(args: &GmailLabelsArgs, flags: &GlobalFlags) -> Result<(
     let auth = crate::client::build_client(Service::Gmail, flags).await?;
     let labels = list_labels(&auth.client, &auth.access_token).await?;
 
-    if let Some(ref filter) = args.filter {
+    let labels = if let Some(ref filter) = args.filter {
         let filter_lower = filter.to_lowercase();
-        let filtered: Vec<_> = labels
+        labels
             .into_iter()
             .filter(|l| l.name.to_lowercase().contains(&filter_lower))
-            .collect();
-        crate::client::output_json(flags, &filtered)?;
+            .collect::<Vec<_>>()
     } else {
-        crate::client::output_json(flags, &labels)?;
-    }
+        labels
+    };
+
+    crate::client::output(flags, &labels, || {
+        let mut rows = vec![vec!["ID".into(), "NAME".into(), "TYPE".into()]];
+        for l in &labels {
+            rows.push(vec![
+                l.id.clone(),
+                l.name.clone(),
+                l.label_type.clone().unwrap_or_default(),
+            ]);
+        }
+        rows
+    })?;
     Ok(())
 }
 

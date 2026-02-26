@@ -130,7 +130,7 @@ async fn execute_ls(args: &DriveLsArgs, flags: &GlobalFlags) -> Result<()> {
     };
 
     let file_list = gog_drive::list::list_files(&auth.client, &auth.access_token, &opts).await?;
-    crate::client::output_json(flags, &file_list)
+    crate::client::output(flags, &file_list, || drive_file_rows(&file_list.files))
 }
 
 async fn execute_search(args: &DriveSearchArgs, flags: &GlobalFlags) -> Result<()> {
@@ -144,7 +144,7 @@ async fn execute_search(args: &DriveSearchArgs, flags: &GlobalFlags) -> Result<(
     )
     .await?;
 
-    crate::client::output_json(flags, &files)
+    crate::client::output(flags, &files, || drive_file_rows(&files))
 }
 
 async fn execute_upload(args: &DriveUploadArgs, flags: &GlobalFlags) -> Result<()> {
@@ -220,6 +220,34 @@ async fn execute_get(args: &DriveGetArgs, flags: &GlobalFlags) -> Result<()> {
         gog_drive::list::get_file(&auth.client, &auth.access_token, &args.file_id).await?;
 
     crate::client::output_json(flags, &file)
+}
+
+fn drive_file_rows(files: &[gog_drive::types::DriveFile]) -> Vec<Vec<String>> {
+    let mut rows = vec![vec![
+        "ID".into(), "NAME".into(), "TYPE".into(), "SIZE".into(), "MODIFIED".into(),
+    ]];
+    for f in files {
+        rows.push(vec![
+            f.id.clone(),
+            f.name.clone(),
+            drive_type(&f.mime_type),
+            f.size.clone().unwrap_or("-".into()),
+            f.modified_time.map_or("-".into(), |t| t.format("%Y-%m-%d %H:%M").to_string()),
+        ]);
+    }
+    rows
+}
+
+fn drive_type(mime: &str) -> String {
+    match mime {
+        "application/vnd.google-apps.folder" => "folder",
+        "application/vnd.google-apps.document" => "gdoc",
+        "application/vnd.google-apps.spreadsheet" => "gsheet",
+        "application/vnd.google-apps.presentation" => "gslides",
+        "application/vnd.google-apps.form" => "gform",
+        _ => mime.rsplit('/').next().unwrap_or(mime),
+    }
+    .to_string()
 }
 
 /// Infer a MIME type from a file extension. Falls back to

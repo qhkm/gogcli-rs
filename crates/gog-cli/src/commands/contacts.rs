@@ -118,10 +118,25 @@ pub async fn execute(cmd: &ContactsCmd, flags: &GlobalFlags) -> Result<()> {
 async fn execute_search(args: &ContactsSearchArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(Service::Contacts, flags).await?;
 
-    // The Contacts API functions use auth.client which already has the Bearer
-    // header set as a default header.
     let persons = gog_contacts::search::search_contacts(&auth.client, &args.query).await?;
-    crate::client::output_json(flags, &persons)
+    if persons.is_empty() && !flags.json {
+        eprintln!("No results");
+        return Ok(());
+    }
+    crate::client::output(flags, &persons, || {
+        let mut rows = vec![vec![
+            "RESOURCE".into(), "NAME".into(), "EMAIL".into(), "PHONE".into(),
+        ]];
+        for p in &persons {
+            rows.push(vec![
+                p.resource_name.clone(),
+                primary_name(p),
+                primary_email(p),
+                primary_phone(p),
+            ]);
+        }
+        rows
+    })
 }
 
 async fn execute_create(args: &ContactsCreateArgs, flags: &GlobalFlags) -> Result<()> {
@@ -246,5 +261,40 @@ async fn execute_groups(args: &ContactsGroupsArgs, flags: &GlobalFlags) -> Resul
     )
     .await?;
 
-    crate::client::output_json(flags, &group_list)
+    crate::client::output(flags, &group_list, || {
+        let mut rows = vec![vec![
+            "RESOURCE".into(), "NAME".into(), "TYPE".into(), "MEMBERS".into(),
+        ]];
+        for g in &group_list.contact_groups {
+            rows.push(vec![
+                g.resource_name.clone(),
+                g.name.clone(),
+                g.group_type.clone(),
+                g.member_count.map_or("-".into(), |n| n.to_string()),
+            ]);
+        }
+        rows
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Helpers for extracting primary fields from a Person
+// ---------------------------------------------------------------------------
+
+fn primary_name(p: &Person) -> String {
+    p.names.first().map_or(String::new(), |n| {
+        if !n.display_name.is_empty() {
+            n.display_name.clone()
+        } else {
+            format!("{} {}", n.given_name, n.family_name).trim().to_string()
+        }
+    })
+}
+
+fn primary_email(p: &Person) -> String {
+    p.email_addresses.first().map_or(String::new(), |e| e.value.clone())
+}
+
+fn primary_phone(p: &Person) -> String {
+    p.phone_numbers.first().map_or(String::new(), |ph| ph.value.clone())
 }

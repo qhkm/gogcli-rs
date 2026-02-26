@@ -82,6 +82,18 @@ async fn execute_responses(args: &FormsResponsesArgs, flags: &GlobalFlags) -> Re
             &params,
         )
         .await?;
-        crate::client::output_json(flags, &list)
+        crate::client::output(flags, &list, || {
+            let mut rows = vec![vec![
+                "RESPONSE_ID".into(), "EMAIL".into(), "SUBMITTED".into(),
+            ]];
+            for r in &list.responses {
+                rows.push(vec![
+                    r.response_id.clone(),
+                    r.respondent_email.clone().unwrap_or_default(),
+                    r.last_submitted_time.clone(),
+                ]);
+            }
+            rows
+        })
     }
 }

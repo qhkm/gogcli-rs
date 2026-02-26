@@ -155,7 +155,20 @@ async fn execute_list(args: &CalendarListArgs, flags: &GlobalFlags) -> Result<()
         order_by: Some("startTime".to_string()),
     };
     let result = list_events(&auth.client, &auth.access_token, &params).await?;
-    crate::client::output_json(flags, &result)?;
+    crate::client::output(flags, &result, || {
+        let mut rows = vec![vec![
+            "ID".into(), "START".into(), "END".into(), "SUMMARY".into(),
+        ]];
+        for e in &result.items {
+            rows.push(vec![
+                e.id.clone().unwrap_or_default(),
+                event_time_str(e.start.as_ref()),
+                event_time_str(e.end.as_ref()),
+                e.summary.clone().unwrap_or_default(),
+            ]);
+        }
+        rows
+    })?;
     Ok(())
 }
 
@@ -239,6 +252,24 @@ async fn execute_freebusy(args: &CalendarFreeBusyArgs, flags: &GlobalFlags) -> R
 async fn execute_calendars(_args: &CalendarCalendarsArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(Service::Calendar, flags).await?;
     let calendars = list_calendars(&auth.client, &auth.access_token).await?;
-    crate::client::output_json(flags, &calendars)?;
+    crate::client::output(flags, &calendars, || {
+        let mut rows = vec![vec!["ID".into(), "SUMMARY".into()]];
+        for c in &calendars {
+            rows.push(vec![
+                c.id.clone(),
+                c.summary.clone().unwrap_or_default(),
+            ]);
+        }
+        rows
+    })?;
     Ok(())
+}
+
+fn event_time_str(dt: Option<&EventDateTime>) -> String {
+    match dt {
+        Some(edt) => edt.date_time.clone()
+            .or_else(|| edt.date.clone())
+            .unwrap_or_default(),
+        None => String::new(),
+    }
 }

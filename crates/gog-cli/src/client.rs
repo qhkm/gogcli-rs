@@ -47,3 +47,33 @@ pub fn output_json<T: Serialize>(flags: &GlobalFlags, value: &T) -> Result<()> {
     gog_core::output::write_json(&mut stdout, value, &cfg)?;
     Ok(())
 }
+
+/// Output data with mode-aware formatting.
+///
+/// - `--json` → pretty JSON
+/// - `--plain` → raw TSV (tab-separated, no alignment)
+/// - default (text) → aligned table with column headers
+///
+/// `text_rows` is called only when not in JSON mode. It should return rows
+/// where the first row is the header (e.g., `["ID", "NAME", "EMAIL"]`).
+pub fn output<T: Serialize, F>(flags: &GlobalFlags, value: &T, text_rows: F) -> Result<()>
+where
+    F: FnOnce() -> Vec<Vec<String>>,
+{
+    if flags.json {
+        return output_json(flags, value);
+    }
+
+    let rows = text_rows();
+    if rows.is_empty() {
+        return Ok(());
+    }
+
+    let mut stdout = std::io::stdout().lock();
+    if flags.plain {
+        gog_core::output::write_tsv(&mut stdout, &rows)?;
+    } else {
+        gog_core::output::write_table(&mut stdout, &rows)?;
+    }
+    Ok(())
+}
