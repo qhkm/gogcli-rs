@@ -17,4 +17,4 @@ thiserror.workspace = true
 tokio.workspace = true
 chrono.workspace = true
 chrono-tz = "0.10"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json", "query"] }
