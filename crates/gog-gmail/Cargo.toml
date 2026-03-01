@@ -16,5 +16,5 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 chrono.workspace = true
-reqwest = { version = "0.12", features = ["json", "multipart"] }
+reqwest = { version = "0.13", features = ["json", "multipart", "query"] }
 base64 = "0.22"
