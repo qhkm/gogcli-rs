@@ -24,11 +24,7 @@ pub async fn validate_refresh_token(
         ("grant_type", "refresh_token"),
     ];
 
-    let resp = client
-        .post(TOKEN_ENDPOINT)
-        .form(&params)
-        .send()
-        .await?;
+    let resp = client.post(TOKEN_ENDPOINT).form(&params).send().await?;
 
     Ok(resp.status().is_success())
 }

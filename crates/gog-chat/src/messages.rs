@@ -39,7 +39,10 @@ pub async fn list_messages(
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let list: MessageList = resp.json().await?;
@@ -60,7 +63,10 @@ pub async fn get_message(
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let message: ChatMessage = resp.json().await?;
@@ -88,7 +94,10 @@ pub async fn send_message(
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let message: ChatMessage = resp.json().await?;
@@ -113,7 +122,10 @@ pub async fn send_message_raw(
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let message: ChatMessage = resp.json().await?;

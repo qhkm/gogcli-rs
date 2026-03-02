@@ -19,13 +19,12 @@ pub async fn delete_event(
     calendar_id: &str,
     event_id: &str,
 ) -> Result<(), CalendarError> {
-    let url = format!("{}/{}/events/{}", CALENDAR_EVENTS_URL, calendar_id, event_id);
+    let url = format!(
+        "{}/{}/events/{}",
+        CALENDAR_EVENTS_URL, calendar_id, event_id
+    );
 
-    let resp = client
-        .delete(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.delete(&url).bearer_auth(access_token).send().await?;
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();

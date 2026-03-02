@@ -26,7 +26,10 @@ pub async fn list_permissions(
     let resp = client
         .get(&url)
         .bearer_auth(access_token)
-        .query(&[("fields", "permissions(id,role,type,emailAddress,displayName)")])
+        .query(&[(
+            "fields",
+            "permissions(id,role,type,emailAddress,displayName)",
+        )])
         .send()
         .await?;
 
@@ -122,11 +125,7 @@ pub async fn remove_permission(
         FILES_ENDPOINT, file_id, permission_id
     );
 
-    let resp = client
-        .delete(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.delete(&url).bearer_auth(access_token).send().await?;
 
     let status = resp.status().as_u16();
     if !resp.status().is_success() {

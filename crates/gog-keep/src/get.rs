@@ -2,7 +2,7 @@
 
 use reqwest::Client;
 
-use crate::{KeepError, types::Note};
+use crate::{types::Note, KeepError};
 
 const KEEP_BASE: &str = "https://keep.googleapis.com/v1";
 

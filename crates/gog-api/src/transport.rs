@@ -122,7 +122,11 @@ impl Default for RetryConfig {
 ///
 /// - Checks `Retry-After` header (integer seconds, or HTTP date).
 /// - Falls back to exponential backoff with jitter: `base * 2^attempt + rand(0..base/2)`.
-pub fn calculate_backoff(attempt: u32, base_delay: Duration, retry_after: Option<&str>) -> Duration {
+pub fn calculate_backoff(
+    attempt: u32,
+    base_delay: Duration,
+    retry_after: Option<&str>,
+) -> Duration {
     if let Some(header) = retry_after {
         let trimmed = header.trim();
         // Try parsing as integer seconds
@@ -204,12 +208,10 @@ pub async fn execute_with_retry(
 
     loop {
         // Clone the request for this attempt (try_clone returns None for streaming bodies)
-        let attempt_req = request
-            .try_clone()
-            .ok_or_else(|| ApiError::GoogleApi {
-                status: 0,
-                message: "request body is not cloneable (streaming body)".to_string(),
-            })?;
+        let attempt_req = request.try_clone().ok_or_else(|| ApiError::GoogleApi {
+            status: 0,
+            message: "request body is not cloneable (streaming body)".to_string(),
+        })?;
 
         let resp = client.execute(attempt_req).await?;
         let status = resp.status().as_u16();
@@ -267,11 +269,7 @@ pub async fn execute_with_retry(
                 return Ok(resp);
             }
 
-            debug!(
-                status,
-                attempt = retries_5xx + 1,
-                "server error, retrying"
-            );
+            debug!(status, attempt = retries_5xx + 1, "server error, retrying");
 
             drop(resp);
             tokio::time::sleep(SERVER_ERROR_RETRY_DELAY).await;
@@ -309,7 +307,11 @@ mod tests {
         for _ in 0..CIRCUIT_BREAKER_THRESHOLD {
             cb.record_failure();
         }
-        assert!(cb.is_open(), "circuit breaker should be open after {} failures", CIRCUIT_BREAKER_THRESHOLD);
+        assert!(
+            cb.is_open(),
+            "circuit breaker should be open after {} failures",
+            CIRCUIT_BREAKER_THRESHOLD
+        );
     }
 
     #[test]
@@ -325,15 +327,14 @@ mod tests {
 
     #[test]
     fn test_circuit_breaker_auto_resets_after_duration() {
-        // Use a circuit breaker with a very short reset duration
+        // Use a circuit breaker with a zero reset duration so it's already expired.
+        // (Avoids Instant subtraction overflow on Windows where Instant can't
+        // go before process start time.)
         let cb = CircuitBreaker {
             failures: AtomicU32::new(CIRCUIT_BREAKER_THRESHOLD),
-            last_failure: Mutex::new(Some(
-                // Set last_failure far in the past so the reset duration has elapsed
-                Instant::now() - Duration::from_secs(3600),
-            )),
+            last_failure: Mutex::new(Some(Instant::now())),
             threshold: CIRCUIT_BREAKER_THRESHOLD,
-            reset_duration: Duration::from_secs(1),
+            reset_duration: Duration::ZERO,
         };
         // Even though failures >= threshold, the reset duration has passed
         assert!(
@@ -387,19 +388,31 @@ mod tests {
     fn test_calculate_backoff_retry_after_seconds() {
         let base = Duration::from_secs(1);
         let d = calculate_backoff(0, base, Some("5"));
-        assert_eq!(d, Duration::from_secs(5), "Retry-After: 5 should give 5s delay");
+        assert_eq!(
+            d,
+            Duration::from_secs(5),
+            "Retry-After: 5 should give 5s delay"
+        );
     }
 
     #[test]
     fn test_calculate_backoff_zero_base() {
         let d = calculate_backoff(0, Duration::ZERO, None);
-        assert_eq!(d, Duration::ZERO, "zero base_delay should give zero backoff");
+        assert_eq!(
+            d,
+            Duration::ZERO,
+            "zero base_delay should give zero backoff"
+        );
     }
 
     #[test]
     fn test_calculate_backoff_negative_retry_after() {
         let d = calculate_backoff(0, Duration::from_secs(1), Some("-1"));
-        assert_eq!(d, Duration::ZERO, "negative Retry-After should give zero delay");
+        assert_eq!(
+            d,
+            Duration::ZERO,
+            "negative Retry-After should give zero delay"
+        );
     }
 
     // -----------------------------------------------------------------
@@ -412,6 +425,9 @@ mod tests {
         assert_eq!(cfg.max_retries_429, MAX_RATE_LIMIT_RETRIES);
         assert_eq!(cfg.max_retries_5xx, MAX_5XX_RETRIES);
         assert_eq!(cfg.base_delay, RATE_LIMIT_BASE_DELAY);
-        assert!(cfg.circuit_breaker.is_some(), "default should have circuit breaker");
+        assert!(
+            cfg.circuit_breaker.is_some(),
+            "default should have circuit breaker"
+        );
     }
 }

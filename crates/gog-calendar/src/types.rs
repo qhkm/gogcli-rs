@@ -50,10 +50,7 @@ impl Event {
 
     /// Return true when the event is all-day (date-only start).
     pub fn is_all_day(&self) -> bool {
-        self.start
-            .as_ref()
-            .map(|s| s.is_all_day())
-            .unwrap_or(false)
+        self.start.as_ref().map(|s| s.is_all_day()).unwrap_or(false)
     }
 
     /// Return true when conference_data is present (e.g. Google Meet).
@@ -264,7 +261,11 @@ mod tests {
         assert_eq!(event.summary.as_deref(), Some("Team Standup"));
         assert_eq!(event.status.as_deref(), Some("confirmed"));
         assert_eq!(event.attendees.len(), 2);
-        assert!(event.recurrence.as_ref().map(|r| !r.is_empty()).unwrap_or(false));
+        assert!(event
+            .recurrence
+            .as_ref()
+            .map(|r| !r.is_empty())
+            .unwrap_or(false));
         assert!(event.has_conference());
     }
 
@@ -454,7 +455,8 @@ mod tests {
             "accessRole": "owner"
         }"##;
 
-        let entry: CalendarListEntry = serde_json::from_str(json).expect("deserialize calendar entry");
+        let entry: CalendarListEntry =
+            serde_json::from_str(json).expect("deserialize calendar entry");
         assert_eq!(entry.id, "primary");
         assert_eq!(entry.primary, Some(true));
         assert_eq!(entry.access_role.as_deref(), Some("owner"));
@@ -496,10 +498,17 @@ mod tests {
         }"#;
 
         let event: Event = serde_json::from_str(json).expect("deserialize conference event");
-        assert!(event.has_conference(), "event with conferenceData must report has_conference=true");
+        assert!(
+            event.has_conference(),
+            "event with conferenceData must report has_conference=true"
+        );
 
         let json_no_conf = r#"{"id": "plain_event", "summary": "Call"}"#;
-        let event_no_conf: Event = serde_json::from_str(json_no_conf).expect("deserialize plain event");
-        assert!(!event_no_conf.has_conference(), "event without conferenceData must report has_conference=false");
+        let event_no_conf: Event =
+            serde_json::from_str(json_no_conf).expect("deserialize plain event");
+        assert!(
+            !event_no_conf.has_conference(),
+            "event without conferenceData must report has_conference=false"
+        );
     }
 }

@@ -33,7 +33,6 @@ pub struct ListOptions {
     pub order_by: Option<String>,
 }
 
-
 // ---------------------------------------------------------------------------
 // list_files
 // ---------------------------------------------------------------------------
@@ -185,11 +184,7 @@ pub async fn delete_file(
 ) -> Result<(), DriveError> {
     let url = format!("{}/{}", FILES_ENDPOINT, file_id);
 
-    let resp = client
-        .delete(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.delete(&url).bearer_auth(access_token).send().await?;
 
     let status = resp.status().as_u16();
     if !resp.status().is_success() {

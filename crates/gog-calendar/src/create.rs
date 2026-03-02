@@ -128,7 +128,10 @@ mod tests {
             location: Some("Conference Room A".to_string()),
             start: EventDateTime::date_time("2026-02-25T10:00:00-05:00", Some("America/New_York")),
             end: EventDateTime::date_time("2026-02-25T11:00:00-05:00", Some("America/New_York")),
-            attendees: vec!["alice@example.com".to_string(), "bob@example.com".to_string()],
+            attendees: vec![
+                "alice@example.com".to_string(),
+                "bob@example.com".to_string(),
+            ],
             recurrence: vec!["RRULE:FREQ=WEEKLY;BYDAY=TU".to_string()],
         };
 
@@ -138,9 +141,16 @@ mod tests {
         assert_eq!(event.description.as_deref(), Some("Agenda: Q1 review"));
         assert_eq!(event.location.as_deref(), Some("Conference Room A"));
         assert_eq!(event.attendees.len(), 2);
-        assert_eq!(event.attendees[0].email.as_deref(), Some("alice@example.com"));
+        assert_eq!(
+            event.attendees[0].email.as_deref(),
+            Some("alice@example.com")
+        );
         assert_eq!(event.attendees[1].email.as_deref(), Some("bob@example.com"));
-        assert!(event.recurrence.as_ref().map(|r| r.len() == 1).unwrap_or(false));
+        assert!(event
+            .recurrence
+            .as_ref()
+            .map(|r| r.len() == 1)
+            .unwrap_or(false));
         assert_eq!(
             event.recurrence.as_ref().unwrap()[0],
             "RRULE:FREQ=WEEKLY;BYDAY=TU"

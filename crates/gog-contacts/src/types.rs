@@ -640,7 +640,10 @@ mod tests {
 
     #[test]
     fn test_contacts_error_api_display() {
-        let err = ContactsError::Api { status: 404, message: "Not Found".to_string() };
+        let err = ContactsError::Api {
+            status: 404,
+            message: "Not Found".to_string(),
+        };
         let msg = err.to_string();
         assert!(msg.contains("404"), "got: {msg}");
         assert!(msg.contains("Not Found"), "got: {msg}");

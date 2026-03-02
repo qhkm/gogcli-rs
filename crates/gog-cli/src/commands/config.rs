@@ -1,8 +1,8 @@
 // Config command.
 // Mirrors: internal/cmd/config_cmd.go
 
-use clap::{Parser, Subcommand};
 use anyhow::{bail, Result};
+use clap::{Parser, Subcommand};
 
 use gog_core::config;
 

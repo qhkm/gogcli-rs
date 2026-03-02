@@ -1,17 +1,13 @@
 // Calendar command.
 // Mirrors: internal/cmd/calendar.go
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use gog_auth::Service;
 use gog_calendar::{
-    list_events, ListParams,
-    create_event, CreateParams,
-    delete_event,
-    query_freebusy,
-    list_calendars,
-    EventDateTime,
+    create_event, delete_event, list_calendars, list_events, query_freebusy, CreateParams,
+    EventDateTime, ListParams,
 };
 
 use crate::GlobalFlags;
@@ -157,7 +153,10 @@ async fn execute_list(args: &CalendarListArgs, flags: &GlobalFlags) -> Result<()
     let result = list_events(&auth.client, &auth.access_token, &params).await?;
     crate::client::output(flags, &result, || {
         let mut rows = vec![vec![
-            "ID".into(), "START".into(), "END".into(), "SUMMARY".into(),
+            "ID".into(),
+            "START".into(),
+            "END".into(),
+            "SUMMARY".into(),
         ]];
         for e in &result.items {
             rows.push(vec![
@@ -225,7 +224,13 @@ async fn execute_delete(args: &CalendarDeleteArgs, flags: &GlobalFlags) -> Resul
         return Ok(());
     }
 
-    delete_event(&auth.client, &auth.access_token, &args.calendar, &args.event_id).await?;
+    delete_event(
+        &auth.client,
+        &auth.access_token,
+        &args.calendar,
+        &args.event_id,
+    )
+    .await?;
     println!("Deleted event {}", args.event_id);
     Ok(())
 }
@@ -233,10 +238,14 @@ async fn execute_delete(args: &CalendarDeleteArgs, flags: &GlobalFlags) -> Resul
 async fn execute_freebusy(args: &CalendarFreeBusyArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(Service::Calendar, flags).await?;
 
-    let time_min = args.from.clone().unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
-    let time_max = args.to.clone().unwrap_or_else(|| {
-        (chrono::Utc::now() + chrono::Duration::days(7)).to_rfc3339()
-    });
+    let time_min = args
+        .from
+        .clone()
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+    let time_max = args
+        .to
+        .clone()
+        .unwrap_or_else(|| (chrono::Utc::now() + chrono::Duration::days(7)).to_rfc3339());
 
     let calendars: Vec<String> = if args.emails.is_empty() {
         vec![auth.email.clone()]
@@ -244,7 +253,14 @@ async fn execute_freebusy(args: &CalendarFreeBusyArgs, flags: &GlobalFlags) -> R
         args.emails.clone()
     };
 
-    let result = query_freebusy(&auth.client, &auth.access_token, &calendars, &time_min, &time_max).await?;
+    let result = query_freebusy(
+        &auth.client,
+        &auth.access_token,
+        &calendars,
+        &time_min,
+        &time_max,
+    )
+    .await?;
     crate::client::output_json(flags, &result)?;
     Ok(())
 }
@@ -255,10 +271,7 @@ async fn execute_calendars(_args: &CalendarCalendarsArgs, flags: &GlobalFlags) -
     crate::client::output(flags, &calendars, || {
         let mut rows = vec![vec!["ID".into(), "SUMMARY".into()]];
         for c in &calendars {
-            rows.push(vec![
-                c.id.clone(),
-                c.summary.clone().unwrap_or_default(),
-            ]);
+            rows.push(vec![c.id.clone(), c.summary.clone().unwrap_or_default()]);
         }
         rows
     })?;
@@ -267,7 +280,9 @@ async fn execute_calendars(_args: &CalendarCalendarsArgs, flags: &GlobalFlags) -
 
 fn event_time_str(dt: Option<&EventDateTime>) -> String {
     match dt {
-        Some(edt) => edt.date_time.clone()
+        Some(edt) => edt
+            .date_time
+            .clone()
             .or_else(|| edt.date.clone())
             .unwrap_or_default(),
         None => String::new(),

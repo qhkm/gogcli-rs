@@ -142,7 +142,11 @@ impl GogError {
                 None => format!("{resource} not found"),
             },
 
-            GogError::GoogleApi { code, message, reason } => match reason {
+            GogError::GoogleApi {
+                code,
+                message,
+                reason,
+            } => match reason {
                 Some(r) => format!("Google API error ({code} {r}): {message}"),
                 None => format!("Google API error ({code}): {message}"),
             },
@@ -220,7 +224,10 @@ mod tests {
 
     #[test]
     fn test_circuit_breaker_exit_code() {
-        assert_eq!(GogError::CircuitBreakerOpen.exit_code(), exit_codes::CIRCUIT_BREAKER);
+        assert_eq!(
+            GogError::CircuitBreakerOpen.exit_code(),
+            exit_codes::CIRCUIT_BREAKER
+        );
     }
 
     #[test]
@@ -231,7 +238,10 @@ mod tests {
 
     #[test]
     fn test_permission_denied_exit_code() {
-        let err = GogError::PermissionDenied { resource: None, action: None };
+        let err = GogError::PermissionDenied {
+            resource: None,
+            action: None,
+        };
         assert_eq!(err.exit_code(), exit_codes::PERMISSION_DENIED);
     }
 
@@ -266,7 +276,10 @@ mod tests {
             client: None,
         };
         let msg = err.format_for_user();
-        assert!(msg.contains("gog auth add"), "expected 'gog auth add' in: {msg}");
+        assert!(
+            msg.contains("gog auth add"),
+            "expected 'gog auth add' in: {msg}"
+        );
         assert!(msg.contains("gmail"), "expected service name in: {msg}");
         assert!(msg.contains("user@example.com"), "expected email in: {msg}");
     }
@@ -276,7 +289,10 @@ mod tests {
         let err = GogError::Usage("unknown flag --foo".to_string());
         let msg = err.format_for_user();
         assert!(msg.contains("--help"), "expected '--help' in: {msg}");
-        assert!(msg.contains("unknown flag --foo"), "expected original message in: {msg}");
+        assert!(
+            msg.contains("unknown flag --foo"),
+            "expected original message in: {msg}"
+        );
     }
 
     #[test]
@@ -308,7 +324,10 @@ mod tests {
         };
         let msg = err.format_for_user();
         assert!(msg.contains("403"), "expected code in: {msg}");
-        assert!(msg.contains("rateLimitExceeded"), "expected reason in: {msg}");
+        assert!(
+            msg.contains("rateLimitExceeded"),
+            "expected reason in: {msg}"
+        );
         assert!(msg.contains("Forbidden"), "expected message in: {msg}");
     }
 
@@ -326,7 +345,10 @@ mod tests {
     #[test]
     fn test_circuit_breaker_display() {
         let msg = GogError::CircuitBreakerOpen.to_string();
-        assert!(msg.contains("circuit breaker"), "expected 'circuit breaker' in: {msg}");
+        assert!(
+            msg.contains("circuit breaker"),
+            "expected 'circuit breaker' in: {msg}"
+        );
     }
 
     #[test]
@@ -343,7 +365,10 @@ mod tests {
             path: "/home/user/.config/gogcli/credentials.json".into(),
         });
         let msg = err.format_for_user();
-        assert!(msg.contains("OAuth client credentials missing"), "got: {msg}");
+        assert!(
+            msg.contains("OAuth client credentials missing"),
+            "got: {msg}"
+        );
         assert!(msg.contains("console.cloud.google.com"), "got: {msg}");
     }
 

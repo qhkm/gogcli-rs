@@ -1,7 +1,7 @@
 // mime.rs - MIME helpers for Gmail message bodies and headers.
 
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
-use crate::{GmailError, types::MessagePart};
+use crate::{types::MessagePart, GmailError};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 
 /// Decode base64url-encoded body data from the Gmail API.
 ///
@@ -401,17 +401,17 @@ mod tests {
         let msg = build_mime_message(
             "sender@example.com",
             &["to@example.com".to_string()],
-            &[
-                "cc1@example.com".to_string(),
-                "cc2@example.com".to_string(),
-            ],
+            &["cc1@example.com".to_string(), "cc2@example.com".to_string()],
             &["bcc@example.com".to_string()],
             "Subject",
             "Body",
             false,
         );
 
-        assert!(msg.contains("Cc: cc1@example.com, cc2@example.com"), "missing Cc");
+        assert!(
+            msg.contains("Cc: cc1@example.com, cc2@example.com"),
+            "missing Cc"
+        );
         assert!(msg.contains("Bcc: bcc@example.com"), "missing Bcc");
     }
 

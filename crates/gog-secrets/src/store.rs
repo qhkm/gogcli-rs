@@ -138,8 +138,7 @@ fn normalize_email(email: &str) -> String {
 }
 
 fn normalize_client(raw: &str) -> Result<String, SecretsError> {
-    normalize_client_name_or_default(raw)
-        .map_err(|e| SecretsError::InvalidClient(e.to_string()))
+    normalize_client_name_or_default(raw).map_err(|e| SecretsError::InvalidClient(e.to_string()))
 }
 
 // ---------------------------------------------------------------------------
@@ -172,18 +171,19 @@ impl FileStore {
 
     /// Encode a key into a safe filename (replace : and @ with _).
     fn key_to_filename(key: &str) -> String {
-        key.replace(':', "_").replace('@', "_")
+        key.replace([':', '@'], "_")
     }
 
     fn file_path(&self, key: &str) -> std::path::PathBuf {
-        self.dir.join(format!("{}.json", Self::key_to_filename(key)))
+        self.dir
+            .join(format!("{}.json", Self::key_to_filename(key)))
     }
 
     fn read_value(&self, key: &str) -> Result<String, SecretsError> {
         let path = self.file_path(key);
         std::fs::read_to_string(&path).map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {
-                SecretsError::Keyring(format!("No matching entry found in secure storage"))
+                SecretsError::Keyring("No matching entry found in secure storage".to_string())
             } else {
                 SecretsError::Keyring(format!("read {}: {e}", path.display()))
             }
@@ -208,7 +208,10 @@ impl FileStore {
         match std::fs::remove_file(&path) {
             Ok(()) => Ok(()),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(e) => Err(SecretsError::Keyring(format!("delete {}: {e}", path.display()))),
+            Err(e) => Err(SecretsError::Keyring(format!(
+                "delete {}: {e}",
+                path.display()
+            ))),
         }
     }
 
@@ -284,8 +287,8 @@ impl Store for FileStore {
         let key = token_key(&normalized_client, &email);
         let json = self.read_value(&key)?;
 
-        let stored: StoredToken = serde_json::from_str(&json)
-            .map_err(|e| SecretsError::Deserialize(e.to_string()))?;
+        let stored: StoredToken =
+            serde_json::from_str(&json).map_err(|e| SecretsError::Deserialize(e.to_string()))?;
 
         Ok(Token {
             client: normalized_client,
@@ -375,9 +378,8 @@ impl Store for FileStore {
         let normalized_client = normalize_client(client)?;
         let key = format!("default_account:{}", normalized_client);
 
-        match self.read_value(&key) {
-            Ok(email) => return Ok(Some(email.trim().to_string())),
-            Err(_) => {}
+        if let Ok(email) = self.read_value(&key) {
+            return Ok(Some(email.trim().to_string()));
         }
 
         // Fall back to the global default_account key
@@ -436,7 +438,9 @@ pub fn open_store() -> Result<Box<dyn Store>, SecretsError> {
     match backend {
         "file" | "auto" | "" => Ok(Box::new(FileStore::new()?)),
         "keychain" | "keyring" | "secret-service" => Ok(Box::new(KeyringStore::new())),
-        other => Err(SecretsError::Keyring(format!("unknown keyring_backend: {other}"))),
+        other => Err(SecretsError::Keyring(format!(
+            "unknown keyring_backend: {other}"
+        ))),
     }
 }
 
@@ -496,8 +500,8 @@ impl Store for KeyringStore {
             created_at,
         };
 
-        let json = serde_json::to_string(&stored)
-            .map_err(|e| SecretsError::Serialize(e.to_string()))?;
+        let json =
+            serde_json::to_string(&stored).map_err(|e| SecretsError::Serialize(e.to_string()))?;
 
         let key = token_key(&normalized_client, &email);
         self.entry(&key)?
@@ -521,8 +525,8 @@ impl Store for KeyringStore {
             .get_password()
             .map_err(|e| SecretsError::Keyring(e.to_string()))?;
 
-        let stored: StoredToken = serde_json::from_str(&json)
-            .map_err(|e| SecretsError::Deserialize(e.to_string()))?;
+        let stored: StoredToken =
+            serde_json::from_str(&json).map_err(|e| SecretsError::Deserialize(e.to_string()))?;
 
         Ok(Token {
             client: normalized_client,

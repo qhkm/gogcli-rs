@@ -245,8 +245,11 @@ pub fn read_client_credentials_for(client: &str) -> Result<ClientCredentials, Co
     }
 
     // Fall back to flat format.
-    let creds: ClientCredentials = serde_json::from_slice(&bytes)
-        .map_err(|e| ConfigError::ParseConfig { path: path.clone(), message: e.to_string() })?;
+    let creds: ClientCredentials =
+        serde_json::from_slice(&bytes).map_err(|e| ConfigError::ParseConfig {
+            path: path.clone(),
+            message: e.to_string(),
+        })?;
     if creds.client_id.is_empty() || creds.client_secret.is_empty() {
         return Err(ConfigError::ParseConfig {
             path,
@@ -298,8 +301,14 @@ mod tests {
     #[test]
     fn test_normalize_client_valid() {
         assert_eq!(normalize_client_name_or_default("work").unwrap(), "work");
-        assert_eq!(normalize_client_name_or_default("My-Client").unwrap(), "my-client");
-        assert_eq!(normalize_client_name_or_default("FOO_BAR.baz").unwrap(), "foo_bar.baz");
+        assert_eq!(
+            normalize_client_name_or_default("My-Client").unwrap(),
+            "my-client"
+        );
+        assert_eq!(
+            normalize_client_name_or_default("FOO_BAR.baz").unwrap(),
+            "foo_bar.baz"
+        );
     }
 
     #[test]
@@ -351,9 +360,11 @@ mod tests {
 
     #[test]
     fn test_config_file_roundtrip() {
-        let mut cfg = ConfigFile::default();
-        cfg.keyring_backend = Some("secret-service".to_string());
-        cfg.default_timezone = Some("America/New_York".to_string());
+        let mut cfg = ConfigFile {
+            keyring_backend: Some("secret-service".to_string()),
+            default_timezone: Some("America/New_York".to_string()),
+            ..Default::default()
+        };
         cfg.account_aliases
             .insert("me@example.com".to_string(), "personal".to_string());
         cfg.account_clients
@@ -433,9 +444,7 @@ mod tests {
     fn read_config_from(path: &std::path::Path) -> Result<ConfigFile, ConfigError> {
         let bytes = match std::fs::read(path) {
             Ok(b) => b,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                return Ok(ConfigFile::default())
-            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(ConfigFile::default()),
             Err(e) => return Err(ConfigError::ReadConfig(e)),
         };
         let text = String::from_utf8_lossy(&bytes);
@@ -467,8 +476,10 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let config_path = tmp.path().join("gogcli").join("config.json");
 
-        let mut cfg = ConfigFile::default();
-        cfg.keyring_backend = Some("file".to_string());
+        let mut cfg = ConfigFile {
+            keyring_backend: Some("file".to_string()),
+            ..Default::default()
+        };
         cfg.account_aliases
             .insert("me@example.com".to_string(), "me".to_string());
 

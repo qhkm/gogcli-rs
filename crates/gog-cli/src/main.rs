@@ -2,8 +2,8 @@
 // Rust port of the Go gogcli tool.
 // Binary entry point with clap v4 derive-macro CLI definition.
 
-mod commands;
 mod client;
+mod commands;
 mod error;
 mod output;
 
@@ -97,7 +97,6 @@ pub enum Command {
     // -----------------------------------------------------------------------
     // Service commands
     // -----------------------------------------------------------------------
-
     /// Auth and credentials.
     Auth(auth::AuthCmd),
 
@@ -130,7 +129,6 @@ pub enum Command {
     // -----------------------------------------------------------------------
     // Utility commands
     // -----------------------------------------------------------------------
-
     /// Print version.
     Version(VersionArgs),
 
@@ -143,7 +141,6 @@ pub enum Command {
     // -----------------------------------------------------------------------
     // Desire-path aliases (top-level shortcuts)
     // -----------------------------------------------------------------------
-
     /// Send an email (alias for 'gmail send').
     #[command(hide = true)]
     Send(gmail::GmailSendArgs),
@@ -285,14 +282,12 @@ mod tests {
             .expect("gmail search should parse");
 
         match cli.command {
-            Command::Gmail(gmail_cmd) => {
-                match gmail_cmd.subcommand {
-                    gmail::GmailSubcommand::Search(args) => {
-                        assert_eq!(args.query, "from:alice@example.com");
-                    }
-                    other => panic!("expected GmailSubcommand::Search, got: {other:?}"),
+            Command::Gmail(gmail_cmd) => match gmail_cmd.subcommand {
+                gmail::GmailSubcommand::Search(args) => {
+                    assert_eq!(args.query, "from:alice@example.com");
                 }
-            }
+                other => panic!("expected GmailSubcommand::Search, got: {other:?}"),
+            },
             other => panic!("expected Command::Gmail, got: {other:?}"),
         }
     }
@@ -300,14 +295,9 @@ mod tests {
     #[test]
     fn test_cli_global_flags() {
         // Verify --json and --account parse correctly.
-        let cli = Cli::try_parse_from([
-            "gog",
-            "--json",
-            "--account",
-            "user@example.com",
-            "version",
-        ])
-        .expect("global flags should parse");
+        let cli =
+            Cli::try_parse_from(["gog", "--json", "--account", "user@example.com", "version"])
+                .expect("global flags should parse");
 
         assert!(cli.global.json);
         assert_eq!(cli.global.account.as_deref(), Some("user@example.com"));
@@ -316,8 +306,7 @@ mod tests {
     #[test]
     fn test_cli_aliases_cal() {
         // Verify "cal list" maps to calendar list.
-        let cli = Cli::try_parse_from(["gog", "cal", "list"])
-            .expect("cal alias should parse");
+        let cli = Cli::try_parse_from(["gog", "cal", "list"]).expect("cal alias should parse");
 
         assert!(matches!(cli.command, Command::Calendar(_)));
     }
@@ -343,8 +332,7 @@ mod tests {
     #[test]
     fn test_cli_aliases_drv() {
         // Verify "drv ls" maps to drive ls.
-        let cli = Cli::try_parse_from(["gog", "drv", "ls"])
-            .expect("drv alias should parse");
+        let cli = Cli::try_parse_from(["gog", "drv", "ls"]).expect("drv alias should parse");
 
         assert!(matches!(cli.command, Command::Drive(_)));
     }
@@ -368,8 +356,7 @@ mod tests {
     #[test]
     fn test_cli_desire_path_login() {
         // Verify top-level "login" parses.
-        let cli = Cli::try_parse_from(["gog", "login"])
-            .expect("desire-path 'login' should parse");
+        let cli = Cli::try_parse_from(["gog", "login"]).expect("desire-path 'login' should parse");
 
         assert!(matches!(cli.command, Command::Login(_)));
     }
@@ -377,8 +364,8 @@ mod tests {
     #[test]
     fn test_cli_desire_path_logout() {
         // Verify top-level "logout" parses.
-        let cli = Cli::try_parse_from(["gog", "logout"])
-            .expect("desire-path 'logout' should parse");
+        let cli =
+            Cli::try_parse_from(["gog", "logout"]).expect("desire-path 'logout' should parse");
 
         assert!(matches!(cli.command, Command::Logout(_)));
     }
@@ -386,8 +373,8 @@ mod tests {
     #[test]
     fn test_cli_desire_path_status() {
         // Verify top-level "status" parses.
-        let cli = Cli::try_parse_from(["gog", "status"])
-            .expect("desire-path 'status' should parse");
+        let cli =
+            Cli::try_parse_from(["gog", "status"]).expect("desire-path 'status' should parse");
 
         assert!(matches!(cli.command, Command::Status(_)));
     }
@@ -400,7 +387,10 @@ mod tests {
 
         match cli.command {
             Command::Calendar(cmd) => {
-                assert!(matches!(cmd.subcommand, calendar::CalendarSubcommand::Create(_)));
+                assert!(matches!(
+                    cmd.subcommand,
+                    calendar::CalendarSubcommand::Create(_)
+                ));
             }
             other => panic!("expected Calendar, got: {other:?}"),
         }
@@ -422,40 +412,37 @@ mod tests {
 
     #[test]
     fn test_cli_dry_run_flag() {
-        let cli = Cli::try_parse_from(["gog", "--dry-run", "version"])
-            .expect("--dry-run should parse");
+        let cli =
+            Cli::try_parse_from(["gog", "--dry-run", "version"]).expect("--dry-run should parse");
 
         assert!(cli.global.dry_run);
     }
 
     #[test]
     fn test_cli_force_flag() {
-        let cli = Cli::try_parse_from(["gog", "--force", "version"])
-            .expect("--force should parse");
+        let cli = Cli::try_parse_from(["gog", "--force", "version"]).expect("--force should parse");
 
         assert!(cli.global.force);
     }
 
     #[test]
     fn test_cli_verbose_flag() {
-        let cli = Cli::try_parse_from(["gog", "--verbose", "version"])
-            .expect("--verbose should parse");
+        let cli =
+            Cli::try_parse_from(["gog", "--verbose", "version"]).expect("--verbose should parse");
 
         assert!(cli.global.verbose);
     }
 
     #[test]
     fn test_cli_plain_flag() {
-        let cli = Cli::try_parse_from(["gog", "--plain", "version"])
-            .expect("--plain should parse");
+        let cli = Cli::try_parse_from(["gog", "--plain", "version"]).expect("--plain should parse");
 
         assert!(cli.global.plain);
     }
 
     #[test]
     fn test_cli_client_default() {
-        let cli = Cli::try_parse_from(["gog", "version"])
-            .expect("version should parse");
+        let cli = Cli::try_parse_from(["gog", "version"]).expect("version should parse");
 
         assert_eq!(cli.global.client, "default");
     }
@@ -485,8 +472,9 @@ mod tests {
 
     #[test]
     fn test_cli_results_only_flag() {
-        let cli = Cli::try_parse_from(["gog", "--results-only", "--json", "gmail", "search", "test"])
-            .expect("--results-only should parse");
+        let cli =
+            Cli::try_parse_from(["gog", "--results-only", "--json", "gmail", "search", "test"])
+                .expect("--results-only should parse");
 
         assert!(cli.global.results_only);
         assert!(cli.global.json);
@@ -494,8 +482,8 @@ mod tests {
 
     #[test]
     fn test_cli_no_input_flag() {
-        let cli = Cli::try_parse_from(["gog", "--no-input", "version"])
-            .expect("--no-input should parse");
+        let cli =
+            Cli::try_parse_from(["gog", "--no-input", "version"]).expect("--no-input should parse");
 
         assert!(cli.global.no_input);
     }
@@ -515,14 +503,12 @@ mod tests {
             .expect("auth add should parse");
 
         match cli.command {
-            Command::Auth(cmd) => {
-                match cmd.subcommand {
-                    auth::AuthSubcommand::Add(args) => {
-                        assert_eq!(args.email.as_deref(), Some("user@example.com"));
-                    }
-                    other => panic!("expected Add, got: {other:?}"),
+            Command::Auth(cmd) => match cmd.subcommand {
+                auth::AuthSubcommand::Add(args) => {
+                    assert_eq!(args.email.as_deref(), Some("user@example.com"));
                 }
-            }
+                other => panic!("expected Add, got: {other:?}"),
+            },
             other => panic!("expected Auth, got: {other:?}"),
         }
     }
@@ -530,8 +516,7 @@ mod tests {
     #[test]
     fn test_cli_auth_login_alias() {
         // auth login (alias for auth add)
-        let cli = Cli::try_parse_from(["gog", "auth", "login"])
-            .expect("auth login should parse");
+        let cli = Cli::try_parse_from(["gog", "auth", "login"]).expect("auth login should parse");
 
         assert!(matches!(
             cli.command,
@@ -544,8 +529,7 @@ mod tests {
 
     #[test]
     fn test_cli_keep_subcommands() {
-        let cli = Cli::try_parse_from(["gog", "keep", "list"])
-            .expect("keep list should parse");
+        let cli = Cli::try_parse_from(["gog", "keep", "list"]).expect("keep list should parse");
 
         match cli.command {
             Command::Keep(cmd) => {
@@ -557,8 +541,13 @@ mod tests {
 
     #[test]
     fn test_cli_forms_subcommands() {
-        let cli = Cli::try_parse_from(["gog", "forms", "get", "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"])
-            .expect("forms get should parse");
+        let cli = Cli::try_parse_from([
+            "gog",
+            "forms",
+            "get",
+            "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+        ])
+        .expect("forms get should parse");
 
         match cli.command {
             Command::Forms(cmd) => {
@@ -570,8 +559,7 @@ mod tests {
 
     #[test]
     fn test_cli_chat_subcommands() {
-        let cli = Cli::try_parse_from(["gog", "chat", "spaces"])
-            .expect("chat spaces should parse");
+        let cli = Cli::try_parse_from(["gog", "chat", "spaces"]).expect("chat spaces should parse");
 
         match cli.command {
             Command::Chat(cmd) => {
@@ -615,16 +603,14 @@ mod tests {
         .expect("gmail send args should parse");
 
         match cli.command {
-            Command::Gmail(cmd) => {
-                match cmd.subcommand {
-                    gmail::GmailSubcommand::Send(args) => {
-                        assert_eq!(args.to, vec!["alice@example.com"]);
-                        assert_eq!(args.subject.as_deref(), Some("Test subject"));
-                        assert_eq!(args.body.as_deref(), Some("Hello world"));
-                    }
-                    other => panic!("expected Send, got: {other:?}"),
+            Command::Gmail(cmd) => match cmd.subcommand {
+                gmail::GmailSubcommand::Send(args) => {
+                    assert_eq!(args.to, vec!["alice@example.com"]);
+                    assert_eq!(args.subject.as_deref(), Some("Test subject"));
+                    assert_eq!(args.body.as_deref(), Some("Hello world"));
                 }
-            }
+                other => panic!("expected Send, got: {other:?}"),
+            },
             other => panic!("expected Gmail, got: {other:?}"),
         }
     }
@@ -646,14 +632,12 @@ mod tests {
             .expect("gmail search --max-results should parse");
 
         match cli.command {
-            Command::Gmail(cmd) => {
-                match cmd.subcommand {
-                    gmail::GmailSubcommand::Search(args) => {
-                        assert_eq!(args.max_results, 50);
-                    }
-                    other => panic!("expected Search, got: {other:?}"),
+            Command::Gmail(cmd) => match cmd.subcommand {
+                gmail::GmailSubcommand::Search(args) => {
+                    assert_eq!(args.max_results, 50);
                 }
-            }
+                other => panic!("expected Search, got: {other:?}"),
+            },
             other => panic!("expected Gmail, got: {other:?}"),
         }
     }
@@ -675,8 +659,8 @@ mod tests {
     fn test_output_config_conflict() {
         use crate::output::make_output_config;
 
-        let err = make_output_config(true, true, false, None)
-            .expect_err("json+plain should conflict");
+        let err =
+            make_output_config(true, true, false, None).expect_err("json+plain should conflict");
 
         assert!(err.contains("cannot combine"));
     }

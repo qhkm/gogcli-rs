@@ -21,11 +21,7 @@ pub async fn get_form(
 ) -> Result<Form, FormsError> {
     let url = format!("{FORMS_BASE}/{form_id}");
 
-    let resp = client
-        .get(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.get(&url).bearer_auth(access_token).send().await?;
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();
@@ -52,11 +48,7 @@ pub async fn get_response(
 ) -> Result<FormResponse, FormsError> {
     let url = format!("{FORMS_BASE}/{form_id}/responses/{response_id}");
 
-    let resp = client
-        .get(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.get(&url).bearer_auth(access_token).send().await?;
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();
@@ -85,7 +77,10 @@ mod tests {
     fn test_get_form_url_construction() {
         let form_id = "1FAIpQLSe_abc123";
         let expected = format!("{FORMS_BASE}/{form_id}");
-        assert_eq!(expected, "https://forms.googleapis.com/v1/forms/1FAIpQLSe_abc123");
+        assert_eq!(
+            expected,
+            "https://forms.googleapis.com/v1/forms/1FAIpQLSe_abc123"
+        );
     }
 
     #[test]
@@ -93,6 +88,9 @@ mod tests {
         let form_id = "form_xyz";
         let response_id = "resp_001";
         let url = format!("{FORMS_BASE}/{form_id}/responses/{response_id}");
-        assert_eq!(url, "https://forms.googleapis.com/v1/forms/form_xyz/responses/resp_001");
+        assert_eq!(
+            url,
+            "https://forms.googleapis.com/v1/forms/form_xyz/responses/resp_001"
+        );
     }
 }

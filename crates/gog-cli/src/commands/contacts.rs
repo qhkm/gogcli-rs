@@ -1,8 +1,8 @@
 // Contacts command.
 // Mirrors: internal/cmd/contacts.go
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use gog_auth::Service;
 use gog_contacts::types::{EmailAddress, Name, Person, PhoneNumber};
@@ -125,7 +125,10 @@ async fn execute_search(args: &ContactsSearchArgs, flags: &GlobalFlags) -> Resul
     }
     crate::client::output(flags, &persons, || {
         let mut rows = vec![vec![
-            "RESOURCE".into(), "NAME".into(), "EMAIL".into(), "PHONE".into(),
+            "RESOURCE".into(),
+            "NAME".into(),
+            "EMAIL".into(),
+            "PHONE".into(),
         ]];
         for p in &persons {
             rows.push(vec![
@@ -188,8 +191,7 @@ async fn execute_update(args: &ContactsUpdateArgs, flags: &GlobalFlags) -> Resul
     let auth = crate::client::build_client(Service::Contacts, flags).await?;
 
     // Fetch the existing contact first so we have the current etag and fields.
-    let mut person =
-        gog_contacts::search::get_contact(&auth.client, &args.resource_name).await?;
+    let mut person = gog_contacts::search::get_contact(&auth.client, &args.resource_name).await?;
 
     // Merge name updates.
     if args.first_name.is_some() || args.last_name.is_some() {
@@ -254,16 +256,16 @@ async fn execute_delete(args: &ContactsDeleteArgs, flags: &GlobalFlags) -> Resul
 async fn execute_groups(args: &ContactsGroupsArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(Service::Contacts, flags).await?;
 
-    let group_list = gog_contacts::groups::list_contact_groups(
-        &auth.client,
-        None,
-        Some(args.max_results),
-    )
-    .await?;
+    let group_list =
+        gog_contacts::groups::list_contact_groups(&auth.client, None, Some(args.max_results))
+            .await?;
 
     crate::client::output(flags, &group_list, || {
         let mut rows = vec![vec![
-            "RESOURCE".into(), "NAME".into(), "TYPE".into(), "MEMBERS".into(),
+            "RESOURCE".into(),
+            "NAME".into(),
+            "TYPE".into(),
+            "MEMBERS".into(),
         ]];
         for g in &group_list.contact_groups {
             rows.push(vec![
@@ -286,15 +288,21 @@ fn primary_name(p: &Person) -> String {
         if !n.display_name.is_empty() {
             n.display_name.clone()
         } else {
-            format!("{} {}", n.given_name, n.family_name).trim().to_string()
+            format!("{} {}", n.given_name, n.family_name)
+                .trim()
+                .to_string()
         }
     })
 }
 
 fn primary_email(p: &Person) -> String {
-    p.email_addresses.first().map_or(String::new(), |e| e.value.clone())
+    p.email_addresses
+        .first()
+        .map_or(String::new(), |e| e.value.clone())
 }
 
 fn primary_phone(p: &Person) -> String {
-    p.phone_numbers.first().map_or(String::new(), |ph| ph.value.clone())
+    p.phone_numbers
+        .first()
+        .map_or(String::new(), |ph| ph.value.clone())
 }

@@ -254,12 +254,16 @@ mod tests {
                 list: Some(ListContent {
                     list_items: vec![
                         ListItem {
-                            text: TextContent { text: "Buy milk".to_string() },
+                            text: TextContent {
+                                text: "Buy milk".to_string(),
+                            },
                             checked: true,
                             children_list_items: vec![],
                         },
                         ListItem {
-                            text: TextContent { text: "Buy eggs".to_string() },
+                            text: TextContent {
+                                text: "Buy eggs".to_string(),
+                            },
                             checked: false,
                             children_list_items: vec![],
                         },
@@ -298,7 +302,9 @@ mod tests {
             name: "notes/t2".to_string(),
             title: "Text".to_string(),
             body: Some(NoteBody {
-                text: Some(TextContent { text: "hi".to_string() }),
+                text: Some(TextContent {
+                    text: "hi".to_string(),
+                }),
                 list: None,
             }),
             create_time: None,
@@ -326,7 +332,9 @@ mod tests {
     #[test]
     fn test_list_item_display_checked() {
         let item = ListItem {
-            text: TextContent { text: "Done task".to_string() },
+            text: TextContent {
+                text: "Done task".to_string(),
+            },
             checked: true,
             children_list_items: vec![],
         };
@@ -339,7 +347,9 @@ mod tests {
     #[test]
     fn test_list_item_display_unchecked() {
         let item = ListItem {
-            text: TextContent { text: "Pending task".to_string() },
+            text: TextContent {
+                text: "Pending task".to_string(),
+            },
             checked: false,
             children_list_items: vec![],
         };

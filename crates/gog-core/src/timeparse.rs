@@ -325,9 +325,18 @@ mod tests {
     // 16. case-insensitive keywords
     #[test]
     fn test_parse_case_insensitive() {
-        assert!(matches!(parse_time("TODAY").unwrap(), ParsedTime::DateOnly(_)));
-        assert!(matches!(parse_time("Today").unwrap(), ParsedTime::DateOnly(_)));
-        assert!(matches!(parse_time("NOW").unwrap(), ParsedTime::DateTime(_)));
+        assert!(matches!(
+            parse_time("TODAY").unwrap(),
+            ParsedTime::DateOnly(_)
+        ));
+        assert!(matches!(
+            parse_time("Today").unwrap(),
+            ParsedTime::DateOnly(_)
+        ));
+        assert!(matches!(
+            parse_time("NOW").unwrap(),
+            ParsedTime::DateTime(_)
+        ));
         assert!(matches!(
             parse_time("TOMORROW").unwrap(),
             ParsedTime::DateOnly(_)

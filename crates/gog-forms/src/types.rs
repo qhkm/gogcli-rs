@@ -56,7 +56,11 @@ impl Form {
     /// Returns the form title, or "(Untitled)" if the title is absent or empty.
     pub fn title(&self) -> &str {
         let t = self.info.title.as_str();
-        if t.is_empty() { "(Untitled)" } else { t }
+        if t.is_empty() {
+            "(Untitled)"
+        } else {
+            t
+        }
     }
 
     /// Returns the number of items that contain a question (not page breaks, etc.).
@@ -364,7 +368,10 @@ mod tests {
         assert_eq!(form.items[0].item_id, "item01");
         assert_eq!(form.items[0].title, "What is your name?");
         assert!(form.items[0].question_item.is_some());
-        assert_eq!(form.responder_uri, "https://docs.google.com/forms/d/e/1FAIpQLSe_abc123/viewform");
+        assert_eq!(
+            form.responder_uri,
+            "https://docs.google.com/forms/d/e/1FAIpQLSe_abc123/viewform"
+        );
         assert_eq!(form.revision_id, "rev001");
         assert!(form.linked_sheet_id.is_none());
     }
@@ -635,7 +642,10 @@ mod tests {
 
     #[test]
     fn test_forms_error_api_display() {
-        let err = FormsError::Api { status: 403, message: "Forbidden".to_string() };
+        let err = FormsError::Api {
+            status: 403,
+            message: "Forbidden".to_string(),
+        };
         let msg = err.to_string();
         assert!(msg.contains("403"), "got: {msg}");
         assert!(msg.contains("Forbidden"), "got: {msg}");
@@ -643,7 +653,8 @@ mod tests {
 
     #[test]
     fn test_forms_error_json_display() {
-        let inner: serde_json::Error = serde_json::from_str::<serde_json::Value>("{bad}").unwrap_err();
+        let inner: serde_json::Error =
+            serde_json::from_str::<serde_json::Value>("{bad}").unwrap_err();
         let err = FormsError::Json(inner);
         let msg = err.to_string();
         assert!(!msg.is_empty(), "error message should be non-empty");

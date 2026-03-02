@@ -1,10 +1,10 @@
 // send.rs - Send email via the Gmail API.
 
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+use crate::mime::build_mime_message;
+use crate::{types::Message, GmailError};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use reqwest::Client;
 use serde_json::json;
-use crate::{GmailError, types::Message};
-use crate::mime::build_mime_message;
 
 const GMAIL_BASE: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 

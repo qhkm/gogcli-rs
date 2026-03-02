@@ -1,7 +1,7 @@
 // thread.rs - Gmail thread operations.
 
+use crate::{types::Thread, GmailError};
 use reqwest::Client;
-use crate::{GmailError, types::Thread};
 
 const GMAIL_BASE: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 

@@ -207,10 +207,7 @@ async fn accept_callback(
         }
 
         // Parse query parameters
-        let query_str = path
-            .split_once('?')
-            .map(|(_, q)| q)
-            .unwrap_or("");
+        let query_str = path.split_once('?').map(|(_, q)| q).unwrap_or("");
 
         let params: std::collections::HashMap<String, String> =
             url::form_urlencoded::parse(query_str.as_bytes())
@@ -242,7 +239,9 @@ async fn accept_callback(
                 body
             );
             let _ = writer.write_all(response.as_bytes()).await;
-            return Err(AuthError::OAuthFlow("state mismatch in callback".to_string()));
+            return Err(AuthError::OAuthFlow(
+                "state mismatch in callback".to_string(),
+            ));
         }
 
         // Extract code
@@ -337,7 +336,10 @@ mod tests {
     fn test_auth_url_with_state() {
         let config = make_config();
         let url = config.auth_url_with_state("test-state-abc");
-        assert!(url.contains("state=test-state-abc"), "URL should contain the state parameter");
+        assert!(
+            url.contains("state=test-state-abc"),
+            "URL should contain the state parameter"
+        );
         assert!(url.contains("prompt=consent"), "URL should request consent");
     }
 
@@ -366,9 +368,7 @@ mod tests {
 
         // Spawn the callback acceptor
         let state_owned = state.to_string();
-        let handle = tokio::spawn(async move {
-            accept_callback(&listener, &state_owned).await
-        });
+        let handle = tokio::spawn(async move { accept_callback(&listener, &state_owned).await });
 
         // Simulate the browser redirect
         tokio::time::sleep(Duration::from_millis(50)).await;
@@ -388,9 +388,7 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
 
-        let handle = tokio::spawn(async move {
-            accept_callback(&listener, "correct-state").await
-        });
+        let handle = tokio::spawn(async move { accept_callback(&listener, "correct-state").await });
 
         tokio::time::sleep(Duration::from_millis(50)).await;
         let url = format!(
@@ -403,7 +401,10 @@ mod tests {
         let result = handle.await.unwrap();
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
-        assert!(err.contains("state mismatch"), "expected state mismatch error, got: {err}");
+        assert!(
+            err.contains("state mismatch"),
+            "expected state mismatch error, got: {err}"
+        );
     }
 
     #[tokio::test]
@@ -413,9 +414,7 @@ mod tests {
         let state = "test-state";
 
         let state_owned = state.to_string();
-        let handle = tokio::spawn(async move {
-            accept_callback(&listener, &state_owned).await
-        });
+        let handle = tokio::spawn(async move { accept_callback(&listener, &state_owned).await });
 
         tokio::time::sleep(Duration::from_millis(50)).await;
 
