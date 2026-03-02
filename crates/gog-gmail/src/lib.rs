@@ -1,10 +1,10 @@
-pub mod types;
-pub mod search;
 pub mod get;
-pub mod send;
 pub mod labels;
-pub mod thread;
 pub mod mime;
+pub mod search;
+pub mod send;
+pub mod thread;
+pub mod types;
 
 pub use types::*;
 

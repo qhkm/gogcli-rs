@@ -31,7 +31,10 @@ pub async fn list_members(
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let list: MemberList = resp.json().await?;
@@ -42,17 +45,17 @@ pub async fn list_members(
 /// e.g. `spaces/AAA/members/BBB`.
 ///
 /// Calls `GET /v1/{member_name}`.
-pub async fn get_member(
-    client: &reqwest::Client,
-    member_name: &str,
-) -> Result<Member, ChatError> {
+pub async fn get_member(client: &reqwest::Client, member_name: &str) -> Result<Member, ChatError> {
     let url = format!("https://chat.googleapis.com/v1/{}", member_name);
     let resp = client.get(&url).send().await?;
     let status = resp.status().as_u16();
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let member: Member = resp.json().await?;

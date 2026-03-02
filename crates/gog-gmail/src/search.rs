@@ -1,8 +1,8 @@
 // search.rs - Search Gmail messages using the Gmail API.
 // Ported from internal Gmail search functionality.
 
+use crate::{types::MessageList, GmailError};
 use reqwest::Client;
-use crate::{GmailError, types::MessageList};
 
 const GMAIL_BASE: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 

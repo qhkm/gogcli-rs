@@ -1,25 +1,18 @@
 // labels.rs - Gmail label operations.
 
+use crate::{types::Label, GmailError};
 use reqwest::Client;
 use serde_json::json;
-use crate::{GmailError, types::Label};
 
 const GMAIL_BASE: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 
 /// List all labels for the authenticated user.
 ///
 /// Uses: `GET https://gmail.googleapis.com/gmail/v1/users/me/labels`
-pub async fn list_labels(
-    client: &Client,
-    access_token: &str,
-) -> Result<Vec<Label>, GmailError> {
+pub async fn list_labels(client: &Client, access_token: &str) -> Result<Vec<Label>, GmailError> {
     let url = format!("{GMAIL_BASE}/labels");
 
-    let resp = client
-        .get(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.get(&url).bearer_auth(access_token).send().await?;
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();
@@ -47,11 +40,7 @@ pub async fn get_label(
 ) -> Result<Label, GmailError> {
     let url = format!("{GMAIL_BASE}/labels/{label_id}");
 
-    let resp = client
-        .get(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.get(&url).bearer_auth(access_token).send().await?;
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();
@@ -100,11 +89,7 @@ pub async fn delete_label(
 ) -> Result<(), GmailError> {
     let url = format!("{GMAIL_BASE}/labels/{label_id}");
 
-    let resp = client
-        .delete(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.delete(&url).bearer_auth(access_token).send().await?;
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();

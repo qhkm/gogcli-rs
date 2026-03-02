@@ -1,6 +1,6 @@
-pub mod types;
-pub mod list;
 pub mod get;
+pub mod list;
+pub mod types;
 
 pub use types::*;
 

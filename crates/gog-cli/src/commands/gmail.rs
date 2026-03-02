@@ -1,14 +1,14 @@
 // Gmail command.
 // Mirrors: internal/cmd/gmail.go
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use gog_auth::Service;
-use gog_gmail::search::{search_messages, SearchParams};
 use gog_gmail::get::{get_message, MessageFormat};
-use gog_gmail::send::{send_message, SendParams};
 use gog_gmail::labels::list_labels;
+use gog_gmail::search::{search_messages, SearchParams};
+use gog_gmail::send::{send_message, SendParams};
 use gog_gmail::thread::{get_thread, list_threads};
 
 use crate::GlobalFlags;
@@ -132,14 +132,9 @@ async fn execute_search(args: &GmailSearchArgs, flags: &GlobalFlags) -> Result<(
     };
     let result = search_messages(&auth.client, &auth.access_token, &params).await?;
     crate::client::output(flags, &result, || {
-        let mut rows = vec![vec![
-            "ID".into(), "THREAD".into(),
-        ]];
+        let mut rows = vec![vec!["ID".into(), "THREAD".into()]];
         for msg in &result.messages {
-            rows.push(vec![
-                msg.id.clone(),
-                msg.thread_id.clone(),
-            ]);
+            rows.push(vec![msg.id.clone(), msg.thread_id.clone()]);
         }
         rows
     })?;
@@ -148,7 +143,11 @@ async fn execute_search(args: &GmailSearchArgs, flags: &GlobalFlags) -> Result<(
 
 async fn execute_get(args: &GmailGetArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(Service::Gmail, flags).await?;
-    let format = if args.raw { MessageFormat::Raw } else { MessageFormat::Full };
+    let format = if args.raw {
+        MessageFormat::Raw
+    } else {
+        MessageFormat::Full
+    };
     let message = get_message(&auth.client, &auth.access_token, &args.id, format).await?;
     crate::client::output_json(flags, &message)?;
     Ok(())
@@ -173,8 +172,12 @@ async fn execute_send(args: &GmailSendArgs, flags: &GlobalFlags) -> Result<()> {
     if flags.dry_run {
         println!("Would send email:");
         println!("  To: {}", args.to.join(", "));
-        if !args.cc.is_empty() { println!("  CC: {}", args.cc.join(", ")); }
-        if !args.bcc.is_empty() { println!("  BCC: {}", args.bcc.join(", ")); }
+        if !args.cc.is_empty() {
+            println!("  CC: {}", args.cc.join(", "));
+        }
+        if !args.bcc.is_empty() {
+            println!("  BCC: {}", args.bcc.join(", "));
+        }
         println!("  Subject: {}", params.subject);
         return Ok(());
     }
@@ -221,7 +224,8 @@ async fn execute_thread(args: &GmailThreadArgs, flags: &GlobalFlags) -> Result<(
             crate::client::output_json(flags, &thread)?;
         }
         None => {
-            let threads = list_threads(&auth.client, &auth.access_token, "", Some(20), None).await?;
+            let threads =
+                list_threads(&auth.client, &auth.access_token, "", Some(20), None).await?;
             crate::client::output_json(flags, &threads)?;
         }
     }

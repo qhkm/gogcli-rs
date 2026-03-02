@@ -30,7 +30,10 @@ pub async fn list_spaces(
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let list: SpaceList = resp.json().await?;
@@ -40,17 +43,17 @@ pub async fn list_spaces(
 /// Get a single space by its resource name (e.g. `spaces/AAAABBBBBBB`).
 ///
 /// Calls `GET /v1/{name}`.
-pub async fn get_space(
-    client: &reqwest::Client,
-    space_name: &str,
-) -> Result<Space, ChatError> {
+pub async fn get_space(client: &reqwest::Client, space_name: &str) -> Result<Space, ChatError> {
     let url = format!("https://chat.googleapis.com/v1/{}", space_name);
     let resp = client.get(&url).send().await?;
     let status = resp.status().as_u16();
 
     if !resp.status().is_success() {
         let msg = resp.text().await.unwrap_or_default();
-        return Err(ChatError::Api { status, message: msg });
+        return Err(ChatError::Api {
+            status,
+            message: msg,
+        });
     }
 
     let space: Space = resp.json().await?;

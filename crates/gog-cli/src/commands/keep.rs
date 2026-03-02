@@ -1,8 +1,8 @@
 // Keep command.
 // Mirrors: internal/cmd/keep.go
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use crate::GlobalFlags;
 

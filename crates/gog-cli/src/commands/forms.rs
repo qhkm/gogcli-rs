@@ -1,8 +1,8 @@
 // Forms command.
 // Mirrors: internal/cmd/forms.go
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use crate::GlobalFlags;
 
@@ -84,7 +84,9 @@ async fn execute_responses(args: &FormsResponsesArgs, flags: &GlobalFlags) -> Re
         .await?;
         crate::client::output(flags, &list, || {
             let mut rows = vec![vec![
-                "RESPONSE_ID".into(), "EMAIL".into(), "SUBMITTED".into(),
+                "RESPONSE_ID".into(),
+                "EMAIL".into(),
+                "SUBMITTED".into(),
             ]];
             for r in &list.responses {
                 rows.push(vec![

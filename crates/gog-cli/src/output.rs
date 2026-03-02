@@ -2,7 +2,7 @@
 // Output formatting - delegates to gog_core::output.
 
 #[allow(unused_imports)]
-pub use gog_core::output::{OutputConfig, OutputMode, OutputError, write_json};
+pub use gog_core::output::{write_json, OutputConfig, OutputError, OutputMode};
 
 /// Build an OutputConfig from CLI global flags.
 #[allow(dead_code)]

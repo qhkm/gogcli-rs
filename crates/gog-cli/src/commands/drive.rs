@@ -1,8 +1,8 @@
 // Drive command.
 // Mirrors: internal/cmd/drive.go
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use gog_auth::Service;
 
@@ -136,13 +136,9 @@ async fn execute_ls(args: &DriveLsArgs, flags: &GlobalFlags) -> Result<()> {
 async fn execute_search(args: &DriveSearchArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(Service::Drive, flags).await?;
 
-    let files = gog_drive::search::search_by_name(
-        &auth.client,
-        &auth.access_token,
-        &args.query,
-        None,
-    )
-    .await?;
+    let files =
+        gog_drive::search::search_by_name(&auth.client, &auth.access_token, &args.query, None)
+            .await?;
 
     crate::client::output(flags, &files, || drive_file_rows(&files))
 }
@@ -177,7 +173,8 @@ async fn execute_upload(args: &DriveUploadArgs, flags: &GlobalFlags) -> Result<(
         parents,
     };
 
-    let file = gog_drive::upload::upload_file(&auth.client, &auth.access_token, &opts, content).await?;
+    let file =
+        gog_drive::upload::upload_file(&auth.client, &auth.access_token, &opts, content).await?;
     crate::client::output_json(flags, &file)
 }
 
@@ -197,10 +194,7 @@ async fn execute_download(args: &DriveDownloadArgs, flags: &GlobalFlags) -> Resu
     };
 
     // Determine the output path: explicit --output flag, or the file_id as filename.
-    let output_path = args
-        .output
-        .clone()
-        .unwrap_or_else(|| args.file_id.clone());
+    let output_path = args.output.clone().unwrap_or_else(|| args.file_id.clone());
 
     std::fs::write(&output_path, &bytes)?;
 
@@ -216,15 +210,18 @@ async fn execute_download(args: &DriveDownloadArgs, flags: &GlobalFlags) -> Resu
 async fn execute_get(args: &DriveGetArgs, flags: &GlobalFlags) -> Result<()> {
     let auth = crate::client::build_client(Service::Drive, flags).await?;
 
-    let file =
-        gog_drive::list::get_file(&auth.client, &auth.access_token, &args.file_id).await?;
+    let file = gog_drive::list::get_file(&auth.client, &auth.access_token, &args.file_id).await?;
 
     crate::client::output_json(flags, &file)
 }
 
 fn drive_file_rows(files: &[gog_drive::types::DriveFile]) -> Vec<Vec<String>> {
     let mut rows = vec![vec![
-        "ID".into(), "NAME".into(), "TYPE".into(), "SIZE".into(), "MODIFIED".into(),
+        "ID".into(),
+        "NAME".into(),
+        "TYPE".into(),
+        "SIZE".into(),
+        "MODIFIED".into(),
     ]];
     for f in files {
         rows.push(vec![
@@ -232,7 +229,8 @@ fn drive_file_rows(files: &[gog_drive::types::DriveFile]) -> Vec<Vec<String>> {
             f.name.clone(),
             drive_type(&f.mime_type),
             f.size.clone().unwrap_or("-".into()),
-            f.modified_time.map_or("-".into(), |t| t.format("%Y-%m-%d %H:%M").to_string()),
+            f.modified_time
+                .map_or("-".into(), |t| t.format("%Y-%m-%d %H:%M").to_string()),
         ]);
     }
     rows

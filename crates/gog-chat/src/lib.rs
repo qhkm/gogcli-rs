@@ -6,10 +6,10 @@
 //   - members:  list members of a space
 
 pub mod error;
-pub mod types;
-pub mod spaces;
-pub mod messages;
 pub mod members;
+pub mod messages;
+pub mod spaces;
+pub mod types;
 
 pub use error::ChatError;
 pub use types::*;

@@ -80,7 +80,10 @@ mod tests {
     fn test_list_responses_url_construction() {
         let form_id = "form_abc";
         let url = format!("{FORMS_BASE}/{form_id}/responses");
-        assert_eq!(url, "https://forms.googleapis.com/v1/forms/form_abc/responses");
+        assert_eq!(
+            url,
+            "https://forms.googleapis.com/v1/forms/form_abc/responses"
+        );
     }
 
     #[test]

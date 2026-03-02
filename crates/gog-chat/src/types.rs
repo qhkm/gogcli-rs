@@ -39,10 +39,7 @@ impl Space {
             &self.display_name
         } else {
             // Fall back to the short ID portion of the resource name.
-            self.name
-                .rsplit('/')
-                .next()
-                .unwrap_or(self.name.as_str())
+            self.name.rsplit('/').next().unwrap_or(self.name.as_str())
         }
     }
 
@@ -266,7 +263,10 @@ mod tests {
             threaded: false,
             admin_installed: false,
         };
-        assert!(bot_dm.is_dm(), "single_user_bot_dm=true should report is_dm=true");
+        assert!(
+            bot_dm.is_dm(),
+            "single_user_bot_dm=true should report is_dm=true"
+        );
 
         let room = Space {
             name: "spaces/ROOM789".to_string(),
@@ -431,7 +431,10 @@ mod tests {
 
         let preview = msg.text_preview(20);
         assert_eq!(preview, "This is a longer mes...");
-        assert!(preview.ends_with("..."), "truncated preview must end with '...'");
+        assert!(
+            preview.ends_with("..."),
+            "truncated preview must end with '...'"
+        );
     }
 
     #[test]
@@ -450,7 +453,10 @@ mod tests {
         // Text shorter than max_len - should not be truncated.
         let preview = msg.text_preview(50);
         assert_eq!(preview, "Hi");
-        assert!(!preview.ends_with("..."), "short text must NOT be truncated");
+        assert!(
+            !preview.ends_with("..."),
+            "short text must NOT be truncated"
+        );
     }
 
     // -----------------------------------------------------------------------

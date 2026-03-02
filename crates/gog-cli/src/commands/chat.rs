@@ -1,8 +1,8 @@
 // Chat command.
 // Mirrors: internal/cmd/chat.go
 
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 use crate::GlobalFlags;
 
@@ -104,11 +104,24 @@ async fn execute_messages(args: &ChatMessagesArgs, flags: &GlobalFlags) -> Resul
         )
         .await?;
         crate::client::output(flags, &list, || {
-            let mut rows = vec![vec!["RESOURCE".into(), "SENDER".into(), "TIME".into(), "TEXT".into()]];
+            let mut rows = vec![vec![
+                "RESOURCE".into(),
+                "SENDER".into(),
+                "TIME".into(),
+                "TEXT".into(),
+            ]];
             for m in &list.messages {
-                let sender = m.sender.as_ref().map_or("-".into(), |s| s.display_name.clone());
+                let sender = m
+                    .sender
+                    .as_ref()
+                    .map_or("-".into(), |s| s.display_name.clone());
                 let text_preview: String = m.text.chars().take(60).collect();
-                rows.push(vec![m.name.clone(), sender, m.create_time.clone(), text_preview]);
+                rows.push(vec![
+                    m.name.clone(),
+                    sender,
+                    m.create_time.clone(),
+                    text_preview,
+                ]);
             }
             rows
         })
@@ -123,7 +136,10 @@ async fn execute_members(args: &ChatMembersArgs, flags: &GlobalFlags) -> Result<
     crate::client::output(flags, &list, || {
         let mut rows = vec![vec!["RESOURCE".into(), "NAME".into(), "ROLE".into()]];
         for m in &list.memberships {
-            let name = m.member.as_ref().map_or("-".into(), |u| u.display_name.clone());
+            let name = m
+                .member
+                .as_ref()
+                .map_or("-".into(), |u| u.display_name.clone());
             let role = m.role.clone();
             rows.push(vec![m.name.clone(), name, role]);
         }

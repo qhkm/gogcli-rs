@@ -354,9 +354,7 @@ mod tests {
         assert!(scopes.contains(&"https://www.googleapis.com/auth/chat.spaces"));
         assert!(scopes.contains(&"https://www.googleapis.com/auth/chat.messages"));
         assert!(scopes.contains(&"https://www.googleapis.com/auth/chat.memberships"));
-        assert!(scopes.contains(
-            &"https://www.googleapis.com/auth/chat.users.readstate.readonly"
-        ));
+        assert!(scopes.contains(&"https://www.googleapis.com/auth/chat.users.readstate.readonly"));
     }
 
     #[test]
@@ -372,14 +370,23 @@ mod tests {
         let scopes = scopes_for_services(&[Service::Gmail, Service::Calendar, Service::Chat]);
         let mut sorted = scopes.clone();
         sorted.sort();
-        assert_eq!(scopes, sorted, "scopes_for_services should return sorted output");
+        assert_eq!(
+            scopes, sorted,
+            "scopes_for_services should return sorted output"
+        );
     }
 
     #[test]
     fn test_scopes_for_manage_includes_openid() {
         let scopes = scopes_for_manage(&[Service::Gmail]);
-        assert!(scopes.contains(&"openid".to_string()), "should include openid");
-        assert!(scopes.contains(&"email".to_string()), "should include email");
+        assert!(
+            scopes.contains(&"openid".to_string()),
+            "should include openid"
+        );
+        assert!(
+            scopes.contains(&"email".to_string()),
+            "should include email"
+        );
         assert!(
             scopes.contains(&"https://www.googleapis.com/auth/userinfo.email".to_string()),
             "should include userinfo.email"
@@ -394,7 +401,10 @@ mod tests {
         assert_eq!(parts.len(), 6, "expected 6 user services in CSV");
         assert!(csv.contains("gmail"));
         assert!(csv.contains("calendar"));
-        assert!(!csv.contains("keep"), "Keep should NOT be in user_service_csv");
+        assert!(
+            !csv.contains("keep"),
+            "Keep should NOT be in user_service_csv"
+        );
     }
 
     #[test]
@@ -404,7 +414,10 @@ mod tests {
             drive_scope: DriveScopeMode::Full,
         };
         let scopes = scopes_for_services_with_options(&[Service::Gmail], &opts);
-        assert_eq!(scopes, vec!["https://www.googleapis.com/auth/gmail.readonly"]);
+        assert_eq!(
+            scopes,
+            vec!["https://www.googleapis.com/auth/gmail.readonly"]
+        );
     }
 
     #[test]

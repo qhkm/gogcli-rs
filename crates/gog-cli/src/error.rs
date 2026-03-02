@@ -1,7 +1,7 @@
 // gog-cli error module
 // Maps service errors to process exit codes.
 
-use gog_core::error::{GogError, exit_codes};
+use gog_core::error::{exit_codes, GogError};
 
 /// Map a GogError to the appropriate process exit code.
 #[allow(dead_code)]

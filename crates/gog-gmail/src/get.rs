@@ -1,7 +1,7 @@
 // get.rs - Fetch a single Gmail message by ID.
 
+use crate::{types::Message, GmailError};
 use reqwest::Client;
-use crate::{GmailError, types::Message};
 
 const GMAIL_BASE: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -74,11 +74,7 @@ pub async fn get_attachment(
 ) -> Result<crate::types::MessagePartBody, GmailError> {
     let url = format!("{GMAIL_BASE}/messages/{message_id}/attachments/{attachment_id}");
 
-    let resp = client
-        .get(&url)
-        .bearer_auth(access_token)
-        .send()
-        .await?;
+    let resp = client.get(&url).bearer_auth(access_token).send().await?;
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();

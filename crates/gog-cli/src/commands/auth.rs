@@ -1,10 +1,10 @@
 // Auth command - Auth and credentials management.
 // Mirrors: internal/cmd/auth.go
 
-use clap::{Parser, Subcommand};
 use anyhow::{bail, Result};
+use clap::{Parser, Subcommand};
 
-use gog_auth::scopes::{Service, scopes_for_services};
+use gog_auth::scopes::{scopes_for_services, Service};
 use gog_core::config;
 use gog_secrets::Token;
 
@@ -145,7 +145,10 @@ async fn execute_remove(args: &AuthRemoveArgs, flags: &GlobalFlags) -> Result<()
     let store = gog_secrets::open_store()?;
     store.delete_token(&flags.client, &email)?;
 
-    println!("Removed credentials for {} (client: {})", email, flags.client);
+    println!(
+        "Removed credentials for {} (client: {})",
+        email, flags.client
+    );
     Ok(())
 }
 
@@ -173,7 +176,12 @@ async fn execute_status(args: &AuthStatusArgs, flags: &GlobalFlags) -> Result<()
             }
         }
         Err(e) => {
-            bail!("no credentials found for {} (client: {}): {}", email, flags.client, e);
+            bail!(
+                "no credentials found for {} (client: {}): {}",
+                email,
+                flags.client,
+                e
+            );
         }
     }
     Ok(())
@@ -190,10 +198,15 @@ async fn execute_list(_args: &AuthListArgs, flags: &GlobalFlags) -> Result<()> {
         println!("Run 'gog auth add' to authorize an account.");
     } else {
         for token in &tokens {
-            println!("{} (client: {}, services: {})",
+            println!(
+                "{} (client: {}, services: {})",
                 token.email,
                 token.client,
-                if token.services.is_empty() { "all".to_string() } else { token.services.join(",") }
+                if token.services.is_empty() {
+                    "all".to_string()
+                } else {
+                    token.services.join(",")
+                }
             );
         }
     }

@@ -2,9 +2,9 @@
 // Authenticated client builder.
 // Ported from internal/googleapi/client.go
 
+use crate::error::ApiError;
 use gog_auth::Service;
 use gog_core::config;
-use crate::error::ApiError;
 
 const TOKEN_ENDPOINT: &str = "https://oauth2.googleapis.com/token";
 
@@ -23,11 +23,7 @@ impl AuthenticatedClient {
     /// 2. Get refresh token from keyring.
     /// 3. Exchange refresh token for access token via OAuth2 token endpoint.
     /// 4. Return client with auth header.
-    pub async fn new(
-        service: Service,
-        email: &str,
-        oauth_client: &str,
-    ) -> Result<Self, ApiError> {
+    pub async fn new(service: Service, email: &str, oauth_client: &str) -> Result<Self, ApiError> {
         // 1. Read client credentials from config
         let creds = config::read_client_credentials_for(oauth_client)?;
 

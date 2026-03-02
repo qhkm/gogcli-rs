@@ -312,7 +312,10 @@ mod tests {
         assert!(sheet.is_google_doc(), "Sheets MIME should be google doc");
 
         let slide = minimal_file("p1", "Slides", MIME_PRESENTATION);
-        assert!(slide.is_google_doc(), "Presentation MIME should be google doc");
+        assert!(
+            slide.is_google_doc(),
+            "Presentation MIME should be google doc"
+        );
 
         let folder = minimal_file("f1", "Folder", MIME_FOLDER);
         assert!(!folder.is_google_doc(), "Folder should not be google doc");

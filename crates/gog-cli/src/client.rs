@@ -4,10 +4,10 @@
 use anyhow::{bail, Context, Result};
 use serde::Serialize;
 
+use crate::GlobalFlags;
 use gog_api::AuthenticatedClient;
 use gog_auth::Service;
 use gog_core::output::OutputConfig;
-use crate::GlobalFlags;
 
 /// Resolve the account email from flags or the default account in the keyring.
 pub fn require_account(flags: &GlobalFlags) -> Result<String> {

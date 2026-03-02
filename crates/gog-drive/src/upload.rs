@@ -53,12 +53,12 @@ pub async fn upload_file(
     let metadata_str = serde_json::to_string(&metadata)?;
 
     // Multipart: part 1 = metadata (application/json), part 2 = file content
-    let metadata_part = Part::text(metadata_str).mime_str("application/json").map_err(|e| {
-        DriveError::Api {
+    let metadata_part = Part::text(metadata_str)
+        .mime_str("application/json")
+        .map_err(|e| DriveError::Api {
             status: 0,
             message: format!("invalid metadata MIME: {e}"),
-        }
-    })?;
+        })?;
 
     let content_part = Part::bytes(content)
         .file_name(opts.name.clone())
